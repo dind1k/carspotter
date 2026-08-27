@@ -1,37 +1,53 @@
-from sqlalchemy import String, Integer, BigInteger, ForeignKey, DateTime, Float
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime
+from sqlalchemy.orm import relationship
 from datetime import datetime
+
 from app.database import Base
+
 
 class User(Base):
     __tablename__ = "users"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
-    telegram_id: Mapped[int] = mapped_column(BigInteger, unique=True, index=True)
-    username: Mapped[str] = mapped_column(String(255), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    id = Column(Integer, primary_key=True, index=True)
+    telegram_id = Column(String, unique=True, index=True, nullable=False)
 
-    cars: Mapped[list["Car"]] = relationship(back_populates="owner")
+    # Game progress
+    xp = Column(Integer, default=0, nullable=False)
+    level = Column(Integer, default=1, nullable=False)
+
+    cars = relationship(
+        "Car",
+        back_populates="owner",
+        cascade="all, delete-orphan"
+    )
 
 
 class Car(Base):
     __tablename__ = "cars"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
-    owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    id = Column(Integer, primary_key=True, index=True)
 
-    # Telegram file_id — фото хранится на серверах Telegram, бесплатно
-    photo_file_id: Mapped[str] = mapped_column(String(255))
+    user_id = Column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=False
+    )
 
-    brand: Mapped[str] = mapped_column(String(100), index=True)
-    model: Mapped[str] = mapped_column(String(150), index=True, nullable=True)
-    year: Mapped[str] = mapped_column(String(10), nullable=True)
+    brand = Column(String, nullable=False)
+    model = Column(String, nullable=False)
+    year = Column(Integer, nullable=True)
 
-    # confidence от ИИ-распознавания (0-1), пригодится для UI "уточните?"
-    ai_confidence: Mapped[float] = mapped_column(Float, nullable=True)
-    confirmed_by_user: Mapped[bool] = mapped_column(default=False)
+    # Game data
+    rarity = Column(String, default="common", nullable=False)
+    image_url = Column(String, nullable=True)
 
-    location: Mapped[str] = mapped_column(String(255), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at = Column(
+        DateTime,
+        default=datetime.utcnow,
+        nullable=False
+    )
 
-    owner: Mapped["User"] = relationship(back_populates="cars")
+    owner = relationship(
+        "User",
+        back_populates="cars"
+    )
