@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
 from app.database import init_db
-from app.routers import cars
+from app.routers import cars, game
 
 
 @asynccontextmanager
@@ -22,6 +22,7 @@ app.add_middleware(
 )
 
 app.include_router(cars.router)
+app.include_router(game.router)
 
 
 @app.get("/health")
