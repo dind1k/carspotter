@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<title>CarSpotter 2.0</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&family=Oswald:wght@500;600;700&display=swap');
+:root{--bg:#0b0c0d;--asphalt:#15181b;--steel:#22262a;--steel2:#282d32;--line:#343a40;--text:#f2ede2;--dim:#9c988f;--yellow:#ffc94a;--green:#7cb88f;--blue:#69b7ff;--purple:#c38cff;--orange:#ff9d4a;--red:#d1683c;--r:16px}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,sans-serif}
+.app{width:100%;max-width:480px;min-height:100vh;margin:auto;background:var(--asphalt);display:flex;flex-direction:column;border-top:4px solid var(--yellow)}
+.top{padding:18px 20px 12px;border-bottom:1px solid var(--line)}.eyebrow{font:600 10px 'JetBrains Mono';letter-spacing:.14em;color:var(--yellow);text-transform:uppercase}.title{font:600 25px Oswald;text-transform:uppercase;margin-top:3px}
+main{flex:1;overflow:hidden}.screen{display:none;height:calc(100vh - 142px);overflow:auto;padding:16px 20px 24px}.screen.active{display:block}.screen::-webkit-scrollbar{display:none}
+.level-card,.goal,.hunt-card,.collection-card,.achievement{background:var(--steel);border:1px solid var(--line);border-radius:var(--r)}
+.level-card{padding:16px;margin-bottom:14px;background:linear-gradient(135deg,#22262a,#1b1f23)}.level-row{display:flex;justify-content:space-between;align-items:end}.level-name{font:600 22px Oswald;text-transform:uppercase}.xp{font:700 12px 'JetBrains Mono';color:var(--yellow)}
+.progress{height:8px;background:#111;border-radius:99px;overflow:hidden;margin:13px 0 7px}.progress>i{display:block;height:100%;background:var(--yellow);border-radius:99px}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0}.stat{padding:12px;background:var(--steel);border:1px solid var(--line);border-radius:12px}.stat b{font:700 20px 'JetBrains Mono';display:block}.stat span{font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.06em}
+.section-title{font:600 18px Oswald;text-transform:uppercase;margin:20px 0 10px}.goal{padding:15px}.goal-top{display:flex;justify-content:space-between;gap:10px}.goal-title{font-weight:700}.reward{font:700 11px 'JetBrains Mono';color:var(--yellow);margin-top:10px}
+.chips{display:flex;gap:7px;overflow:auto;margin:12px 0}.chip{white-space:nowrap;background:var(--steel);border:1px solid var(--line);color:var(--dim);border-radius:999px;padding:7px 12px;font:600 11px 'JetBrains Mono'}.chip.active{background:var(--yellow);color:#15181b;border-color:var(--yellow)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}.car{background:var(--steel);border:1px solid var(--line);border-radius:14px;overflow:hidden}.photo{height:120px;background:var(--tint,#364);display:flex;align-items:center;justify-content:center;position:relative}.car svg{width:65%;color:rgba(242,237,226,.88)}.rarity{position:absolute;top:8px;right:8px;border-radius:99px;padding:4px 7px;font:700 9px 'JetBrains Mono';background:#15181bcc;border:1px solid currentColor}.common{color:var(--green)}.uncommon{color:var(--blue)}.rare{color:var(--purple)}.legendary{color:var(--orange)}.car-info{padding:10px}.brand{font:700 12px 'JetBrains Mono'}.model{font-size:11px;color:var(--dim);margin-top:3px}
+.hunt-card{text-align:center;padding:26px 18px;margin-top:20px}.target{width:74px;height:74px;border-radius:50%;display:grid;place-items:center;margin:0 auto 15px;background:var(--yellow);color:#15181b;font-size:32px}.hunt-title{font:600 25px Oswald;text-transform:uppercase}.hunt-card p{font-size:13px;color:var(--dim);line-height:1.5}.primary{width:100%;border:0;border-radius:13px;padding:16px;background:var(--yellow);color:#15181b;font-weight:800;font-size:14px;margin-top:12px;cursor:pointer}.secondary{width:100%;border:1px solid var(--line);border-radius:13px;padding:14px;background:transparent;color:var(--text);font-weight:700;margin-top:8px}
+.hunt-goal{margin-top:16px;text-align:left;padding:14px;background:#1b1f23;border-radius:12px}.hunt-goal small{color:var(--dim);font:600 10px 'JetBrains Mono';text-transform:uppercase}
+.collection-card{padding:14px;margin-bottom:10px}.collection-head{display:flex;justify-content:space-between}.collection-card h3{margin:0;font-size:15px}.collection-card p{font-size:12px;color:var(--dim);margin:5px 0}.collection-card .progress{margin:10px 0 5px}.collection-card small{color:var(--yellow);font:600 10px 'JetBrains Mono'}
+.tabs{display:flex;gap:8px;margin-bottom:14px}.tab-mini{flex:1;padding:10px;border-radius:10px;background:var(--steel);border:1px solid var(--line);color:var(--dim);font-weight:700}.tab-mini.active{color:#15181b;background:var(--yellow);border-color:var(--yellow)}
+.achievement{padding:13px;display:flex;gap:12px;margin-bottom:9px}.badge{width:42px;height:42px;border-radius:12px;background:#1b1f23;display:grid;place-items:center;font-size:21px}.achievement b{font-size:13px}.achievement p{font-size:11px;color:var(--dim);margin:4px 0}
+.tabbar{display:flex;background:#1b1f23;border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}.tab{flex:1;background:none;border:0;color:var(--dim);padding:11px 4px 9px;font-size:10px;font-weight:700;display:flex;flex-direction:column;align-items:center;gap:4px}.tab.active{color:var(--yellow)}.tab .ico{font-size:20px}
+.camera-box{height:360px;border:1px solid var(--line);border-radius:18px;background:radial-gradient(ellipse,#262b2f,#15181b 70%);display:grid;place-items:center;position:relative;overflow:hidden}.camera-box:before,.camera-box:after{content:"";position:absolute;inset:16px;border:2px solid var(--yellow);clip-path:polygon(0 0,22% 0,22% 4%,4% 4%,4% 22%,0 22%,0 0,100% 0,100% 22%,96% 22%,96% 4%,78% 4%,78% 0,100% 0,100% 100%,78% 100%,78% 96%,96% 96%,96% 78%,100% 78%,100% 100%,0 100%,0 78%,4% 78%,4% 96%,22% 96%,22% 100%,0 100%)}.camera-hint{text-align:center;color:var(--dim);font:500 12px 'JetBrains Mono';line-height:1.6}
+.result{display:none}.result.show{display:block}.result-card{text-align:center}.result-photo{height:190px;border-radius:16px;background:#345248;display:grid;place-items:center;margin-bottom:16px}.result-photo svg{width:50%;color:var(--text)}.new{color:var(--yellow);font:700 11px 'JetBrains Mono';letter-spacing:.1em}.result h2{font:600 28px Oswald;margin:8px 0 0}.confidence{font:600 12px 'JetBrains Mono';color:var(--dim);margin:10px}.toast{position:fixed;left:50%;bottom:90px;transform:translate(-50%,20px);opacity:0;background:#22301f;border:1px solid var(--green);color:var(--green);padding:12px 16px;border-radius:12px;font-weight:700;font-size:13px;transition:.25s;z-index:5}.toast.show{opacity:1;transform:translate(-50%,0)}
+</style>
+</head>
+<body>
+<div class="app">
+<header class="top"><div class="eyebrow" id="eyebrow">Твоя автомобильная охота</div><div class="title" id="title">Гараж</div></header>
+<main>
+<section class="screen active" id="garage">
+<div class="level-card"><div class="level-row"><div><div class="eyebrow">Уровень 2</div><div class="level-name">Наблюдатель</div></div><div class="xp">320 / 500 XP</div></div><div class="progress"><i style="width:64%"></i></div></div>
+<div class="stats"><div class="stat"><b id="carCount">6</b><span>находок</span></div><div class="stat"><b id="brandCount">6</b><span>марок</span></div><div class="stat"><b>1</b><span>редкая</span></div></div>
+<div class="goal"><div class="goal-top"><div><div class="eyebrow">🎯 цель дня</div><div class="goal-title">Найди новую марку</div></div><div class="xp">0 / 1</div></div><div class="progress"><i style="width:0%"></i></div><div class="reward">НАГРАДА +100 XP</div></div>
+<div class="section-title">Мои находки</div><div class="chips"><button class="chip active">Все</button><button class="chip">BMW</button><button class="chip">Audi</button><button class="chip">Toyota</button></div>
+<div class="grid" id="grid"></div>
+</section>
+
+<section class="screen" id="hunt">
+<div class="hunt-card"><div class="target">🎯</div><div class="hunt-title">Охота началась</div><p>Найди интересный автомобиль, сфотографируй его и добавь в свою коллекцию.</p><button class="primary" id="scanBtn">📸 СКАНИРОВАТЬ АВТОМОБИЛЬ</button><button class="secondary" id="demoBtn">Показать демо-распознавание</button><div class="hunt-goal"><small>Текущая цель</small><div style="font-weight:700;margin-top:5px">🇯🇵 Найди японский автомобиль</div><div class="reward">НАГРАДА +100 XP</div></div></div>
+<div class="result" id="result"><div class="result-card"><div class="result-photo"><svg viewBox="0 0 120 60" fill="none"><use href="#carIcon"/></svg></div><div class="new">🆕 НОВАЯ НАХОДКА!</div><h2>TOYOTA SUPRA</h2><div class="confidence">96% УВЕРЕННОСТЬ ИИ</div><div class="reward">+150 XP · РЕДКАЯ НАХОДКА</div><button class="primary" id="addDemo">ДОБАВИТЬ В КОЛЛЕКЦИЮ</button><button class="secondary">✏️ Исправить результат</button></div></div>
+</section>
+
+<section class="screen" id="collection">
+<div class="tabs"><button class="tab-mini active" id="collectionsTab">КОЛЛЕКЦИИ</button><button class="tab-mini" id="achievementsTab">ДОСТИЖЕНИЯ</button></div>
+<div id="collectionsList"></div><div id="achievementsList" style="display:none"></div>
+</section>
+</main>
+<nav class="tabbar">
+<button class="tab active" data-screen="garage"><span class="ico">🚗</span>Гараж</button>
+<button class="tab" data-screen="hunt"><span class="ico">🎯</span>Охота</button>
+<button class="tab" data-screen="collection"><span class="ico">🏆</span>Коллекция</button>
+</nav>
+</div>
+<input id="photoInput" type="file" accept="image/*" capture="environment" style="display:none">
+<div class="toast" id="toast">✓ Добавлено в коллекцию!</div>
+<svg width="0" height="0" style="position:absolute"><symbol id="carIcon" viewBox="0 0 120 60"><path d="M8 42C6 42 5 40 6 37l5-11c1.5-4 5-7 9.5-7H34l8-10c2-2.5 5-4 8.5-4h24c4 0 7.5 2 10 5.5l8 10.5 9 2c6 1.5 11 7 11 13v6" stroke="currentColor" stroke-width="3.4" fill="none" stroke-linecap="round"/><path d="M6 42h108" stroke="currentColor" stroke-width="3.4"/><circle cx="30" cy="45" r="9" fill="#15181b" stroke="currentColor" stroke-width="3.4"/><circle cx="90" cy="45" r="9" fill="#15181b" stroke="currentColor" stroke-width="3.4"/></symbol></svg>
+<script>
+const cars=[
+['TOYOTA','Camry',2018,'#5a3a30','common','ОБЫЧНАЯ'],['BMW','3 Series',2015,'#2c4258','uncommon','НЕОБЫЧНАЯ'],['LADA','Vesta',2021,'#33502f','common','ОБЫЧНАЯ'],['MERCEDES','E-Class',2012,'#4a4b50','uncommon','НЕОБЫЧНАЯ'],['AUDI','A6',2019,'#3a4560','rare','РЕДКАЯ'],['VOLKSWAGEN','Golf',2016,'#565c33','common','ОБЫЧНАЯ']];
+function renderCars(){grid.innerHTML=cars.map(c=>`<div class="car"><div class="photo" style="--tint:${c[3]}"><svg viewBox="0 0 120 60" fill="none"><use href="#carIcon"/></svg><span class="rarity ${c[4]}">${c[5]}</span></div><div class="car-info"><div class="brand">${c[0]}</div><div class="model">${c[1]} · ${c[2]}</div></div></div>`).join('');carCount.textContent=cars.length;brandCount.textContent=new Set(cars.map(x=>x[0])).size}
+renderCars();
+const titles={garage:['Твоя автомобильная охота','Гараж'],hunt:['Главный режим игры','Охота'],collection:['Прогресс игрока','Коллекция']};
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));const s=b.dataset.screen;document.getElementById(s).classList.add('active');eyebrow.textContent=titles[s][0];title.textContent=titles[s][1]});
+const collections=[
+['🇩🇪','Немецкая тройка','BMW · Mercedes · Audi',100,3,3,'+300 XP'],['🇯🇵','Японская пятёрка','Toyota · Honda · Nissan · Mazda · Subaru',20,1,5,'+500 XP'],['🏁','Первые 10','Собери 10 автомобилей',60,6,10,'+200 XP'],['⭐','Редкая добыча','Найди 3 редких автомобиля',33,1,3,'+400 XP'],['🌍','Путешественник','Найди машины в 5 городах',20,1,5,'+500 XP']];
+collectionsList.innerHTML=collections.map(x=>`<div class="collection-card"><div class="collection-head"><h3>${x[0]} ${x[1]}</h3><b>${x[4]}/${x[5]}</b></div><p>${x[2]}</p><div class="progress"><i style="width:${x[3]}%"></i></div><small>НАГРАДА ${x[6]}</small></div>`).join('');
+const achievements=[['📸','Первый кадр','Добавь первый автомобиль','ОТКРЫТО'],['🔟','Коллекционер','Собери 10 автомобилей','6 / 10'],['🏷️','Разнообразие','Найди 10 разных марок','6 / 10'],['🇩🇪','Немецкий инженер','Собери BMW, Audi и Mercedes','ОТКРЫТО'],['🔥','На ходу','Охоться 3 дня подряд','1 / 3'],['⭐','Редкая добыча','Найди редкий автомобиль','ОТКРЫТО']];
+achievementsList.innerHTML=achievements.map(a=>`<div class="achievement"><div class="badge">${a[0]}</div><div><b>${a[1]}</b><p>${a[2]}</p><div class="reward">${a[3]}</div></div></div>`).join('');
+collectionsTab.onclick=()=>{collectionsTab.classList.add('active');achievementsTab.classList.remove('active');collectionsList.style.display='block';achievementsList.style.display='none'};achievementsTab.onclick=()=>{achievementsTab.classList.add('active');collectionsTab.classList.remove('active');collectionsList.style.display='none';achievementsList.style.display='block'};
+const API="https://carspotter-production-5255.up.railway.app";
+const tg=window.Telegram?.WebApp;
+if(tg){tg.ready();tg.expand();}
+let pending=null;
+const input=document.getElementById('photoInput');
+
+function showToast(t){toast.textContent=t;toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),2500)}
+function isNewCar(x){return !cars.some(c=>c[0].toLowerCase()===(x.brand||'').toLowerCase() && c[1].toLowerCase()===(x.model||'').toLowerCase())}
+function rarityFor(x){const text=((x.brand||'')+' '+(x.model||'')).toLowerCase();
+ if(/ferrari|lamborghini|mclaren/.test(text))return ['legendary','ЛЕГЕНДАРНАЯ','#5a3925'];
+ if(/supra|gtr|911|m3|amg|rs /.test(text))return ['rare','РЕДКАЯ','#443a58'];
+ if(/bmw|mercedes|audi|porsche/.test(text))return ['uncommon','НЕОБЫЧНАЯ','#2c4258'];
+ return ['common','ОБЫЧНАЯ','#33502f'];
+}
+async function recognize(file){
+ const fd=new FormData();fd.append('photo',file,file.name||'car.jpg');
+ const r=await fetch(API+'/api/cars/recognize',{method:'POST',body:fd});
+ if(!r.ok)throw new Error(await r.text());
+ return await r.json();
+}
+function showResult(data,file){
+ pending={...data,file};
+ result.classList.add('show');
+ const isNew=isNewCar(data), rarity=rarityFor(data);
+ result.querySelector('.new').textContent=isNew?'🆕 НОВАЯ НАХОДКА!':'📸 ПОВТОРНАЯ НАХОДКА';
+ result.querySelector('h2').textContent=((data.brand||'Неизвестно')+' '+(data.model||'')).toUpperCase();
+ result.querySelector('.confidence').textContent=Math.round((data.confidence||0)*100)+'% УВЕРЕННОСТЬ ИИ';
+ result.querySelector('.reward').textContent=(isNew?'+50 XP':' +10 XP')+' · '+rarity[1];
+ const url=URL.createObjectURL(file);
+ const box=result.querySelector('.result-photo');
+ box.style.backgroundImage=`url("${url}")`;box.style.backgroundSize='cover';box.style.backgroundPosition='center';
+ box.innerHTML='';
+ result.scrollIntoView({behavior:'smooth'});
+}
+input.addEventListener('change',async e=>{
+ const file=e.target.files[0];if(!file)return;
+ scanBtn.disabled=true;scanBtn.textContent='⏳ РАСПОЗНАЁМ...';
+ try{const data=await recognize(file);showResult(data,file)}
+ catch(err){console.error(err);showToast('Не удалось распознать. Проверь backend.')}
+ finally{scanBtn.disabled=false;scanBtn.textContent='📸 СКАНИРОВАТЬ АВТОМОБИЛЬ';input.value=''}
+});
+scanBtn.onclick=()=>input.click();
+demoBtn.onclick=()=>showResult({brand:'Toyota',model:'Supra',year:'2020',confidence:.96},new File(['demo'],'demo.jpg',{type:'image/jpeg'}));
+
+async function saveToBackend(data){
+ if(!tg?.initData)return null;
+ // Backend currently stores Telegram photo_file_id, not raw browser images.
+ const body={photo_file_id:'webapp-'+Date.now(),brand:data.brand,model:data.model||null,year:data.year||null,ai_confidence:data.confidence||null,confirmed_by_user:true,location:null};
+ const r=await fetch(API+'/api/cars',{method:'POST',headers:{'Content-Type':'application/json','X-Telegram-Init-Data':tg.initData},body:JSON.stringify(body)});
+ if(!r.ok)throw new Error(await r.text());
+ return await r.json();
+}
+addDemo.onclick=async()=>{
+ if(!pending){showToast('Сначала распознай автомобиль');return}
+ const rarity=rarityFor(pending);
+ const local={brand:pending.brand,model:pending.model||'Неизвестная модель',year:pending.year||'—',rarity};
+ try{
+   const saved=await saveToBackend(pending);
+   if(saved){localStorage.removeItem('carspotter_local_cars');}
+ }catch(e){console.warn(e);showToast('Сохранено локально: Telegram-сохранение недоступно');}
+ cars.unshift([local.brand.toUpperCase(),local.model,local.year,rarity[2],rarity[0],rarity[1]]);
+ localStorage.setItem('carspotter_local_cars',JSON.stringify(cars));
+ renderCars();result.classList.remove('show');showToast('✓ Добавлено в коллекцию!');
+};
+const savedLocal=localStorage.getItem('carspotter_local_cars');
+if(savedLocal){try{const a=JSON.parse(savedLocal);cars.splice(0,cars.length,...a);renderCars()}catch(e){}}
+async function loadGarage(){
+ if(!tg?.initData)return;
+ try{
+  const r=await fetch(API+'/api/cars',{headers:{'X-Telegram-Init-Data':tg.initData}});
+  if(!r.ok)return;
+  const data=await r.json();
+  if(Array.isArray(data)&&data.length){
+   cars.splice(0,cars.length,...data.map(x=>{const q=rarityFor(x);return [x.brand,(x.model||'Неизвестная модель'),(x.year||'—'),q[2],q[0],q[1]]}));
+   renderCars();
+  }
+ }catch(e){console.warn('Garage load failed',e)}
+}
+loadGarage();
+</script>
+</body></html>
