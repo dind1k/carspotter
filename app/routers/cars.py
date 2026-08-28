@@ -5,6 +5,7 @@ from typing import Optional
 from io import BytesIO
 from fastapi.responses import Response
 
+from app.services.telegram_files import download_telegram_photo
 from app.database import get_db
 from app.models import Car, User
 from app.schemas import CarCreate, CarOut, RecognizeResult
