@@ -246,3 +246,42 @@ async def test_save_photo(
     await db.refresh(car)
 
     return car
+    @router.post("/test-save")
+async def test_save_photo(
+    photo_file_id: str,
+    db: AsyncSession = Depends(get_db),
+):
+
+    user_result = await db.execute(
+        select(User).limit(1)
+    )
+
+    user = user_result.scalar_one_or_none()
+
+    if not user:
+        user = User(
+            telegram_id="test_user",
+            username="test"
+        )
+
+        db.add(user)
+        await db.commit()
+        await db.refresh(user)
+
+    car = Car(
+        owner_id=user.id,
+        photo_file_id=photo_file_id,
+        brand="BMW",
+        model="M3",
+        year="2020",
+        ai_confidence=0.95,
+        confirmed_by_user=True,
+        location="Москва"
+    )
+
+    db.add(car)
+
+    await db.commit()
+    await db.refresh(car)
+
+    return car
