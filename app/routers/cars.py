@@ -4,12 +4,12 @@ from sqlalchemy import select
 from typing import Optional
 from fastapi.responses import Response
 
-from app.services.telegram_files import download_telegram_photo
 from app.database import get_db
 from app.models import Car, User
 from app.schemas import CarCreate, CarOut, RecognizeResult
 from app.services.recognition import recognize_car
 from app.services.telegram_auth import validate_init_data
+from app.services.telegram_files import download_telegram_photo
 
 
 router = APIRouter(
@@ -17,6 +17,10 @@ router = APIRouter(
     tags=["cars"]
 )
 
+
+# =========================
+# Telegram user auth
+# =========================
 
 async def get_current_user(
     x_telegram_init_data: str = Header(...),
@@ -34,7 +38,9 @@ async def get_current_user(
     import json
 
     tg_user = json.loads(data["user"])
-    telegram_id = tg_user["id"]
+
+    telegram_id = str(tg_user["id"])
+
 
     result = await db.execute(
         select(User).where(
@@ -44,18 +50,27 @@ async def get_current_user(
 
     user = result.scalar_one_or_none()
 
+
     if not user:
+
         user = User(
             telegram_id=telegram_id,
             username=tg_user.get("username")
         )
 
         db.add(user)
+
         await db.commit()
         await db.refresh(user)
 
+
     return user
 
+
+
+# =========================
+# AI recognize photo
+# =========================
 
 @router.post(
     "/recognize",
@@ -64,19 +79,21 @@ async def get_current_user(
 async def recognize(
     photo: UploadFile = File(...)
 ):
-    """
-    Шаг 1:
-    Пользователь отправляет фото.
-    ИИ определяет машину.
-    """
 
     image_bytes = await photo.read()
 
-    return await recognize_car(
+    result = await recognize_car(
         image_bytes,
         photo.content_type or "image/jpeg"
     )
 
+    return result
+
+
+
+# =========================
+# Save car
+# =========================
 
 @router.post(
     "",
@@ -87,23 +104,26 @@ async def create_car(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """
-    Шаг 2:
-    Сохраняем подтвержденную машину.
-    """
 
     db_car = Car(
         owner_id=user.id,
         **car.model_dump()
     )
 
+
     db.add(db_car)
 
     await db.commit()
     await db.refresh(db_car)
 
+
     return db_car
 
+
+
+# =========================
+# Get user cars
+# =========================
 
 @router.get(
     "",
@@ -115,32 +135,39 @@ async def list_cars(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """
-    Получение альбома пользователя.
-    """
 
     query = select(Car).where(
         Car.owner_id == user.id
     )
+
 
     if brand:
         query = query.where(
             Car.brand.ilike(f"%{brand}%")
         )
 
+
     if model:
         query = query.where(
             Car.model.ilike(f"%{model}%")
         )
 
+
     query = query.order_by(
         Car.created_at.desc()
     )
 
+
     result = await db.execute(query)
+
 
     return result.scalars().all()
 
+
+
+# =========================
+# Delete car
+# =========================
 
 @router.delete("/{car_id}")
 async def delete_car(
@@ -148,9 +175,6 @@ async def delete_car(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """
-    Удаление машины из коллекции.
-    """
 
     result = await db.execute(
         select(Car).where(
@@ -159,7 +183,9 @@ async def delete_car(
         )
     )
 
+
     car = result.scalar_one_or_none()
+
 
     if not car:
         raise HTTPException(
@@ -167,13 +193,21 @@ async def delete_car(
             detail="Car not found"
         )
 
+
     await db.delete(car)
+
     await db.commit()
+
 
     return {
         "ok": True
     }
 
+
+
+# =========================
+# Get car photo
+# =========================
 
 @router.get("/{car_id}/photo")
 async def get_car_photo(
@@ -181,9 +215,6 @@ async def get_car_photo(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """
-    Получение фотографии машины из Telegram.
-    """
 
     result = await db.execute(
         select(Car).where(
@@ -192,7 +223,9 @@ async def get_car_photo(
         )
     )
 
+
     car = result.scalar_one_or_none()
+
 
     if not car:
         raise HTTPException(
@@ -200,88 +233,78 @@ async def get_car_photo(
             detail="Car not found"
         )
 
+
     photo = await download_telegram_photo(
         car.photo_file_id
     )
+
 
     return Response(
         content=photo,
         media_type="image/jpeg"
     )
+
+
+
+# =========================
+# TEMP TEST SAVE
+# удалить после проверки
+# =========================
+
 @router.post("/test-save")
 async def test_save_photo(
     photo_file_id: str,
     db: AsyncSession = Depends(get_db),
 ):
-    user_result = await db.execute(
+
+    result = await db.execute(
         select(User).limit(1)
     )
 
-    user = user_result.scalar_one_or_none()
+
+    user = result.scalar_one_or_none()
+
 
     if not user:
-        user = User(
-            telegram_id="test_user"
-        )
 
-        db.add(user)
-        await db.commit()
-        await db.refresh(user)
-
-
-    car = Car(
-        owner_id=user.id,
-        photo_file_id=photo_file_id,
-        brand="BMW",
-        model="M3",
-        year="2020",
-        ai_confidence=0.95,
-        confirmed_by_user=True,
-        location="Москва"
-    )
-
-    db.add(car)
-
-    await db.commit()
-    await db.refresh(car)
-
-    return car
-    @router.post("/test-save")
-async def test_save_photo(
-    photo_file_id: str,
-    db: AsyncSession = Depends(get_db),
-):
-
-    user_result = await db.execute(
-        select(User).limit(1)
-    )
-
-    user = user_result.scalar_one_or_none()
-
-    if not user:
         user = User(
             telegram_id="test_user",
             username="test"
         )
 
         db.add(user)
+
         await db.commit()
         await db.refresh(user)
 
+
+
     car = Car(
+
         owner_id=user.id,
+
         photo_file_id=photo_file_id,
+
         brand="BMW",
+
         model="M3",
+
         year="2020",
+
         ai_confidence=0.95,
+
         confirmed_by_user=True,
+
         location="Москва"
+
     )
+
 
     db.add(car)
 
     await db.commit()
+
     await db.refresh(car)
+
 
     return car
