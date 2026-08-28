@@ -2,7 +2,10 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Header
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from typing import Optional
+from io import BytesIO
+from fastapi.responses import Response
 
+from app.bot import bot
 from app.database import get_db
 from app.models import Car, User
 from app.schemas import CarCreate, CarOut, RecognizeResult
@@ -89,3 +92,34 @@ async def delete_car(
     await db.delete(car)
     await db.commit()
     return {"ok": True}
+@router.get("/{car_id}/photo")
+async def get_car_photo(
+    car_id: int,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(Car).where(
+            Car.id == car_id,
+            Car.owner_id == user.id
+        )
+    )
+
+    car = result.scalar_one_or_none()
+
+    if not car:
+        raise HTTPException(404, "Car not found")
+
+    telegram_file = await bot.get_file(car.photo_file_id)
+
+    buffer = BytesIO()
+
+    await bot.download_file(
+        telegram_file.file_path,
+        destination=buffer
+    )
+
+    return Response(
+        content=buffer.getvalue(),
+        media_type="image/jpeg"
+    )
