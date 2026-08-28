@@ -110,16 +110,11 @@ async def get_car_photo(
     if not car:
         raise HTTPException(404, "Car not found")
 
-    telegram_file = await bot.get_file(car.photo_file_id)
+photo = await download_telegram_photo(
+    car.photo_file_id
+)
 
-    buffer = BytesIO()
-
-    await bot.download_file(
-        telegram_file.file_path,
-        destination=buffer
-    )
-
-    return Response(
-        content=buffer.getvalue(),
-        media_type="image/jpeg"
-    )
+return Response(
+    content=photo,
+    media_type="image/jpeg"
+)
