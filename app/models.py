@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime
+from sqlalchemy import Column, Integer, String, Float, Boolean, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 from datetime import datetime
 
@@ -10,10 +10,13 @@ class User(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     telegram_id = Column(String, unique=True, index=True, nullable=False)
+    username = Column(String, nullable=True)
 
-    # Game progress
-    xp = Column(Integer, default=0, nullable=False)
-    level = Column(Integer, default=1, nullable=False)
+    created_at = Column(
+        DateTime,
+        default=datetime.utcnow,
+        nullable=False
+    )
 
     cars = relationship(
         "Car",
@@ -27,19 +30,47 @@ class Car(Base):
 
     id = Column(Integer, primary_key=True, index=True)
 
-    user_id = Column(
+    owner_id = Column(
         Integer,
         ForeignKey("users.id"),
         nullable=False
     )
 
-    brand = Column(String, nullable=False)
-    model = Column(String, nullable=False)
-    year = Column(Integer, nullable=True)
+    photo_file_id = Column(
+        String,
+        nullable=False
+    )
 
-    # Game data
-    rarity = Column(String, default="common", nullable=False)
-    image_url = Column(String, nullable=True)
+    brand = Column(
+        String,
+        nullable=False
+    )
+
+    model = Column(
+        String,
+        nullable=True
+    )
+
+    year = Column(
+        String,
+        nullable=True
+    )
+
+    ai_confidence = Column(
+        Float,
+        nullable=True
+    )
+
+    confirmed_by_user = Column(
+        Boolean,
+        default=True,
+        nullable=False
+    )
+
+    location = Column(
+        String,
+        nullable=True
+    )
 
     created_at = Column(
         DateTime,
