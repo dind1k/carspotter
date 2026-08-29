@@ -19,13 +19,7 @@ from sqlalchemy import select
 
 from app.database import get_db
 from app.models import Car, User
-from app.schemas import (
-    CarCreate,
-    CarOut,
-    RecognizeResult,
-)
-
-from app.services.recognition import recognize_car
+from app.schemas import CarCreate, CarOut
 from app.services.telegram_auth import validate_init_data
 
 
@@ -66,9 +60,15 @@ async def get_current_user(
             detail="Invalid Telegram init data",
         )
 
-    tg_user = json.loads(
-        data["user"]
-    )
+    try:
+        tg_user = json.loads(
+            data["user"]
+        )
+    except Exception:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid Telegram user data",
+        )
 
     telegram_id = str(
         tg_user["id"]
@@ -83,6 +83,7 @@ async def get_current_user(
     user = result.scalar_one_or_none()
 
     if not user:
+
         user = User(
             telegram_id=telegram_id,
             username=tg_user.get("username"),
@@ -98,16 +99,33 @@ async def get_current_user(
 
 
 # =========================
-# AI recognize + save photo
+# Upload photo
 # =========================
 
 @router.post(
-    "/recognize",
-    response_model=RecognizeResult,
+    "/upload",
 )
-async def recognize(
+async def upload_photo(
     photo: UploadFile = File(...),
 ):
+
+    if not photo.content_type:
+        raise HTTPException(
+            status_code=400,
+            detail="File type is missing",
+        )
+
+    allowed_types = {
+        "image/jpeg": ".jpg",
+        "image/png": ".png",
+        "image/webp": ".webp",
+    }
+
+    if photo.content_type not in allowed_types:
+        raise HTTPException(
+            status_code=400,
+            detail="Only JPG, PNG and WEBP images are allowed",
+        )
 
     image_bytes = await photo.read()
 
@@ -117,16 +135,9 @@ async def recognize(
             detail="Empty image",
         )
 
-    # -------------------------
-    # Save original photograph
-    # -------------------------
-
-    extension = ".jpg"
-
-    if photo.content_type == "image/png":
-        extension = ".png"
-    elif photo.content_type == "image/webp":
-        extension = ".webp"
+    extension = allowed_types[
+        photo.content_type
+    ]
 
     filename = (
         f"{uuid.uuid4().hex}"
@@ -146,42 +157,10 @@ async def recognize(
             image_bytes
         )
 
-    # -------------------------
-    # AI recognition
-    # -------------------------
-
-    try:
-
-        result = await recognize_car(
-            image_bytes,
-            photo.content_type or "image/jpeg",
-        )
-
-    except Exception as e:
-
-        print(
-            "RECOGNITION ERROR:",
-            repr(e),
-        )
-
-        # Фото уже сохранено.
-        # Даже если AI не распознал машину,
-        # файл физически существует.
-
-        raise HTTPException(
-            status_code=500,
-            detail="Recognition failed",
-        )
-
-    # -------------------------
-    # Return photo URL
-    # -------------------------
-
-    result["photo_url"] = (
-        f"/api/cars/photo/{filename}"
-    )
-
-    return result
+    return {
+        "photo_url":
+            f"/api/cars/photo/{filename}"
+    }
 
 
 # =========================
@@ -195,8 +174,6 @@ async def get_uploaded_photo(
     filename: str,
 ):
 
-    # Защита от попыток выйти
-    # из директории uploads
     filename = os.path.basename(
         filename
     )
