@@ -1,6 +1,3 @@
-import os
-import uuid
-
 from fastapi import (
     APIRouter,
     Depends,
@@ -13,15 +10,22 @@ from fastapi import (
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from typing import Optional
 
-from fastapi.responses import FileResponse
+from fastapi.responses import Response
+
+from typing import Optional
+import json
+import httpx
 
 from app.database import get_db
 from app.models import Car, User
 from app.schemas import CarOut, RecognizeResult
+
 from app.services.recognition import recognize_car
 from app.services.telegram_auth import validate_init_data
+from app.services.telegram_files import download_telegram_photo
+
+from app.config import settings
 
 
 router = APIRouter(
@@ -30,13 +34,9 @@ router = APIRouter(
 )
 
 
-UPLOAD_DIR = "uploads"
-os.makedirs(UPLOAD_DIR, exist_ok=True)
-
-
-# =========================
-# Telegram user auth
-# =========================
+# =========================================================
+# TELEGRAM USER AUTH
+# =========================================================
 
 async def get_current_user(
     x_telegram_init_data: str = Header(...),
@@ -51,9 +51,13 @@ async def get_current_user(
             detail="Invalid Telegram init data"
         )
 
-    import json
-
-    tg_user = json.loads(data["user"])
+    try:
+        tg_user = json.loads(data["user"])
+    except Exception:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid Telegram user data"
+        )
 
     telegram_id = str(tg_user["id"])
 
@@ -79,9 +83,9 @@ async def get_current_user(
     return user
 
 
-# =========================
-# AI recognize photo
-# =========================
+# =========================================================
+# AI RECOGNITION
+# =========================================================
 
 @router.post(
     "/recognize",
@@ -91,108 +95,227 @@ async def recognize(
     photo: UploadFile = File(...)
 ):
 
+    if not photo.content_type:
+        raise HTTPException(
+            status_code=400,
+            detail="Photo content type is missing"
+        )
+
+    if not photo.content_type.startswith("image/"):
+        raise HTTPException(
+            status_code=400,
+            detail="File must be an image"
+        )
+
     image_bytes = await photo.read()
 
     if not image_bytes:
         raise HTTPException(
             status_code=400,
-            detail="Empty photo"
+            detail="Empty image"
         )
 
-    result = await recognize_car(
-        image_bytes,
-        photo.content_type or "image/jpeg"
-    )
+    try:
 
-    return result
+        result = await recognize_car(
+            image_bytes,
+            photo.content_type
+        )
+
+        return result
+
+    except Exception as e:
+
+        print(
+            "RECOGNITION ERROR:",
+            repr(e)
+        )
+
+        raise HTTPException(
+            status_code=422,
+            detail="Car recognition failed"
+        )
 
 
-# =========================
-# Save car + real photo
-# =========================
+# =========================================================
+# SAVE CAR + REAL PHOTO
+# =========================================================
 
 @router.post(
     "",
     response_model=CarOut
 )
 async def create_car(
+    photo: UploadFile = File(...),
+
     brand: str = Form(...),
     model: Optional[str] = Form(None),
     year: Optional[str] = Form(None),
+
     ai_confidence: Optional[float] = Form(None),
+
     confirmed_by_user: bool = Form(True),
+
     location: Optional[str] = Form(None),
 
-    photo: UploadFile = File(...),
-
     user: User = Depends(get_current_user),
+
     db: AsyncSession = Depends(get_db),
 ):
+
+    if not photo.content_type:
+        raise HTTPException(
+            status_code=400,
+            detail="Photo content type is missing"
+        )
+
+    if not photo.content_type.startswith("image/"):
+        raise HTTPException(
+            status_code=400,
+            detail="File must be an image"
+        )
 
     image_bytes = await photo.read()
 
     if not image_bytes:
         raise HTTPException(
             status_code=400,
-            detail="Empty photo"
+            detail="Empty image"
         )
 
-    # Проверяем тип файла
-    content_type = photo.content_type or ""
+    # -----------------------------------------------------
+    # Отправляем настоящую фотографию в Telegram
+    # -----------------------------------------------------
 
-    if not content_type.startswith("image/"):
-        raise HTTPException(
-            status_code=400,
-            detail="File must be an image"
-        )
-
-    # Уникальное имя
-    extension = ".jpg"
-
-    if "png" in content_type:
-        extension = ".png"
-    elif "webp" in content_type:
-        extension = ".webp"
-    elif "jpeg" in content_type:
-        extension = ".jpg"
-
-    filename = f"{uuid.uuid4().hex}{extension}"
-
-    file_path = os.path.join(
-        UPLOAD_DIR,
-        filename
+    telegram_api_url = (
+        f"https://api.telegram.org/bot"
+        f"{settings.BOT_TOKEN}/sendPhoto"
     )
 
-    # Сохраняем фотографию
-    with open(file_path, "wb") as f:
-        f.write(image_bytes)
+    try:
 
-    # Создаём автомобиль
+        async with httpx.AsyncClient(
+            timeout=30
+        ) as client:
+
+            response = await client.post(
+                telegram_api_url,
+
+                data={
+                    "chat_id": user.telegram_id,
+                },
+
+                files={
+                    "photo": (
+                        photo.filename or "car.jpg",
+                        image_bytes,
+                        photo.content_type,
+                    )
+                }
+            )
+
+        if response.status_code != 200:
+
+            print(
+                "TELEGRAM SEND PHOTO ERROR:",
+                response.text
+            )
+
+            raise HTTPException(
+                status_code=500,
+                detail="Failed to save photo"
+            )
+
+        telegram_result = response.json()
+
+        if not telegram_result.get("ok"):
+
+            print(
+                "TELEGRAM API ERROR:",
+                telegram_result
+            )
+
+            raise HTTPException(
+                status_code=500,
+                detail="Telegram failed to save photo"
+            )
+
+        message = telegram_result["result"]
+
+        photos = message.get("photo", [])
+
+        if not photos:
+
+            raise HTTPException(
+                status_code=500,
+                detail="Telegram returned no photo"
+            )
+
+        # Берём самое большое доступное изображение
+        photo_file_id = photos[-1]["file_id"]
+
+    except HTTPException:
+        raise
+
+    except Exception as e:
+
+        print(
+            "PHOTO SAVE ERROR:",
+            repr(e)
+        )
+
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to upload photo"
+        )
+
+
+    # -----------------------------------------------------
+    # Сохраняем автомобиль
+    # -----------------------------------------------------
+
     db_car = Car(
         owner_id=user.id,
-        photo_path=file_path,
-        photo_file_id=None,
 
-        brand=brand,
-        model=model,
-        year=year,
+        photo_file_id=photo_file_id,
+
+        brand=brand.strip(),
+
+        model=(
+            model.strip()
+            if model
+            else None
+        ),
+
+        year=(
+            year.strip()
+            if year
+            else None
+        ),
 
         ai_confidence=ai_confidence,
+
         confirmed_by_user=confirmed_by_user,
-        location=location,
+
+        location=(
+            location.strip()
+            if location
+            else None
+        ),
     )
 
     db.add(db_car)
 
     await db.commit()
+
     await db.refresh(db_car)
 
     return db_car
 
 
-# =========================
-# Get user cars
-# =========================
+# =========================================================
+# GET USER CARS
+# =========================================================
 
 @router.get(
     "",
@@ -203,6 +326,7 @@ async def list_cars(
     model: Optional[str] = None,
 
     user: User = Depends(get_current_user),
+
     db: AsyncSession = Depends(get_db),
 ):
 
@@ -211,13 +335,19 @@ async def list_cars(
     )
 
     if brand:
+
         query = query.where(
-            Car.brand.ilike(f"%{brand}%")
+            Car.brand.ilike(
+                f"%{brand}%"
+            )
         )
 
     if model:
+
         query = query.where(
-            Car.model.ilike(f"%{model}%")
+            Car.model.ilike(
+                f"%{model}%"
+            )
         )
 
     query = query.order_by(
@@ -229,15 +359,18 @@ async def list_cars(
     return result.scalars().all()
 
 
-# =========================
-# Get car photo
-# =========================
+# =========================================================
+# GET CAR PHOTO
+# =========================================================
 
-@router.get("/{car_id}/photo")
+@router.get(
+    "/{car_id}/photo"
+)
 async def get_car_photo(
     car_id: int,
 
     user: User = Depends(get_current_user),
+
     db: AsyncSession = Depends(get_db),
 ):
 
@@ -251,37 +384,55 @@ async def get_car_photo(
     car = result.scalar_one_or_none()
 
     if not car:
+
         raise HTTPException(
             status_code=404,
             detail="Car not found"
         )
 
-    if not car.photo_path:
+    if not car.photo_file_id:
+
         raise HTTPException(
             status_code=404,
             detail="Photo not found"
         )
 
-    if not os.path.exists(car.photo_path):
-        raise HTTPException(
-            status_code=404,
-            detail="Photo file does not exist"
+    try:
+
+        photo = await download_telegram_photo(
+            car.photo_file_id
         )
 
-    return FileResponse(
-        car.photo_path
+    except Exception as e:
+
+        print(
+            "PHOTO DOWNLOAD ERROR:",
+            repr(e)
+        )
+
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to load photo"
+        )
+
+    return Response(
+        content=photo,
+        media_type="image/jpeg"
     )
 
 
-# =========================
-# Delete car
-# =========================
+# =========================================================
+# DELETE CAR
+# =========================================================
 
-@router.delete("/{car_id}")
+@router.delete(
+    "/{car_id}"
+)
 async def delete_car(
     car_id: int,
 
     user: User = Depends(get_current_user),
+
     db: AsyncSession = Depends(get_db),
 ):
 
@@ -295,14 +446,11 @@ async def delete_car(
     car = result.scalar_one_or_none()
 
     if not car:
+
         raise HTTPException(
             status_code=404,
             detail="Car not found"
         )
-
-    # Удаляем фотографию
-    if car.photo_path and os.path.exists(car.photo_path):
-        os.remove(car.photo_path)
 
     await db.delete(car)
 
