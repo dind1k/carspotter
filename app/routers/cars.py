@@ -1,8 +1,6 @@
-```python
 import os
 import uuid
 import json
-
 from typing import Optional
 
 from fastapi import (
@@ -12,7 +10,6 @@ from fastapi import (
     UploadFile,
     File,
     Header,
-    Request,
 )
 
 from fastapi.responses import FileResponse
@@ -34,7 +31,7 @@ from app.services.telegram_auth import validate_init_data
 
 router = APIRouter(
     prefix="/api/cars",
-    tags=["cars"]
+    tags=["cars"],
 )
 
 
@@ -46,7 +43,7 @@ UPLOAD_DIR = "uploads"
 
 os.makedirs(
     UPLOAD_DIR,
-    exist_ok=True
+    exist_ok=True,
 )
 
 
@@ -66,7 +63,7 @@ async def get_current_user(
     if not data:
         raise HTTPException(
             status_code=401,
-            detail="Invalid Telegram init data"
+            detail="Invalid Telegram init data",
         )
 
     tg_user = json.loads(
@@ -86,10 +83,9 @@ async def get_current_user(
     user = result.scalar_one_or_none()
 
     if not user:
-
         user = User(
             telegram_id=telegram_id,
-            username=tg_user.get("username")
+            username=tg_user.get("username"),
         )
 
         db.add(user)
@@ -107,10 +103,10 @@ async def get_current_user(
 
 @router.post(
     "/recognize",
-    response_model=RecognizeResult
+    response_model=RecognizeResult,
 )
 async def recognize(
-    photo: UploadFile = File(...)
+    photo: UploadFile = File(...),
 ):
 
     image_bytes = await photo.read()
@@ -118,9 +114,8 @@ async def recognize(
     if not image_bytes:
         raise HTTPException(
             status_code=400,
-            detail="Empty image"
+            detail="Empty image",
         )
-
 
     # -------------------------
     # Save original photograph
@@ -130,10 +125,8 @@ async def recognize(
 
     if photo.content_type == "image/png":
         extension = ".png"
-
     elif photo.content_type == "image/webp":
         extension = ".webp"
-
 
     filename = (
         f"{uuid.uuid4().hex}"
@@ -142,19 +135,16 @@ async def recognize(
 
     filepath = os.path.join(
         UPLOAD_DIR,
-        filename
+        filename,
     )
-
 
     with open(
         filepath,
-        "wb"
+        "wb",
     ) as f:
-
         f.write(
             image_bytes
         )
-
 
     # -------------------------
     # AI recognition
@@ -164,34 +154,32 @@ async def recognize(
 
         result = await recognize_car(
             image_bytes,
-            photo.content_type or "image/jpeg"
+            photo.content_type or "image/jpeg",
         )
 
     except Exception as e:
 
         print(
             "RECOGNITION ERROR:",
-            repr(e)
+            repr(e),
         )
 
-        # Фотография всё равно сохранена.
-        # Это важно: пользователь сможет
-        # ввести машину вручную.
+        # Фото уже сохранено.
+        # Даже если AI не распознал машину,
+        # файл физически существует.
 
         raise HTTPException(
             status_code=500,
-            detail="Recognition failed"
+            detail="Recognition failed",
         )
-
 
     # -------------------------
     # Return photo URL
     # -------------------------
 
     result["photo_url"] = (
-        f"/uploads/{filename}"
+        f"/api/cars/photo/{filename}"
     )
-
 
     return result
 
@@ -204,22 +192,27 @@ async def recognize(
     "/photo/{filename}"
 )
 async def get_uploaded_photo(
-    filename: str
+    filename: str,
 ):
 
-    filepath = os.path.join(
-        UPLOAD_DIR,
+    # Защита от попыток выйти
+    # из директории uploads
+    filename = os.path.basename(
         filename
     )
 
+    filepath = os.path.join(
+        UPLOAD_DIR,
+        filename,
+    )
 
-    if not os.path.isfile(filepath):
-
+    if not os.path.isfile(
+        filepath
+    ):
         raise HTTPException(
             status_code=404,
-            detail="Photo not found"
+            detail="Photo not found",
         )
-
 
     return FileResponse(
         filepath
@@ -232,15 +225,13 @@ async def get_uploaded_photo(
 
 @router.post(
     "",
-    response_model=CarOut
+    response_model=CarOut,
 )
 async def create_car(
     car: CarCreate,
-
     user: User = Depends(
         get_current_user
     ),
-
     db: AsyncSession = Depends(
         get_db
     ),
@@ -248,9 +239,8 @@ async def create_car(
 
     db_car = Car(
         owner_id=user.id,
-        **car.model_dump()
+        **car.model_dump(),
     )
-
 
     db.add(
         db_car
@@ -262,7 +252,6 @@ async def create_car(
         db_car
     )
 
-
     return db_car
 
 
@@ -272,18 +261,14 @@ async def create_car(
 
 @router.get(
     "",
-    response_model=list[CarOut]
+    response_model=list[CarOut],
 )
 async def list_cars(
-
     brand: Optional[str] = None,
-
     model: Optional[str] = None,
-
     user: User = Depends(
         get_current_user
     ),
-
     db: AsyncSession = Depends(
         get_db
     ),
@@ -295,34 +280,27 @@ async def list_cars(
         Car.owner_id == user.id
     )
 
-
     if brand:
-
         query = query.where(
             Car.brand.ilike(
                 f"%{brand}%"
             )
         )
 
-
     if model:
-
         query = query.where(
             Car.model.ilike(
                 f"%{model}%"
             )
         )
 
-
     query = query.order_by(
         Car.created_at.desc()
     )
 
-
     result = await db.execute(
         query
     )
-
 
     return result.scalars().all()
 
@@ -335,41 +313,29 @@ async def list_cars(
     "/{car_id}"
 )
 async def delete_car(
-
     car_id: int,
-
     user: User = Depends(
         get_current_user
     ),
-
     db: AsyncSession = Depends(
         get_db
     ),
 ):
 
     result = await db.execute(
-
         select(Car).where(
-
             Car.id == car_id,
-
-            Car.owner_id == user.id
-
+            Car.owner_id == user.id,
         )
-
     )
-
 
     car = result.scalar_one_or_none()
 
-
     if not car:
-
         raise HTTPException(
             status_code=404,
-            detail="Car not found"
+            detail="Car not found",
         )
-
 
     await db.delete(
         car
@@ -377,8 +343,6 @@ async def delete_car(
 
     await db.commit()
 
-
     return {
         "ok": True
     }
-```
