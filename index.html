@@ -1547,54 +1547,6 @@ function openCamera() {
 scanBtn.addEventListener("click", openCamera);
 
 
-/* =========================================================
-   RECOGNITION
-========================================================= */
-
-async function recognize(file) {
-
-    const formData = new FormData();
-
-    formData.append(
-        "photo",
-        file,
-        file.name || "car.jpg"
-    );
-
-
-    const response = await fetch(
-        API + "/api/cars/recognize",
-        {
-            method:"POST",
-            body:formData
-        }
-    );
-
-
-    if (!response.ok) {
-
-        let message = "Ошибка распознавания";
-
-        try {
-
-            const text =
-                await response.text();
-
-            if (text) {
-                message = text;
-            }
-
-        } catch(e){}
-
-        throw new Error(message);
-
-    }
-
-
-    return await response.json();
-
-}
-
 
 /* =========================================================
    SHOW PHOTO
@@ -1703,127 +1655,101 @@ function showResult(data, file) {
 /* =========================================================
    CAMERA RESULT
 ========================================================= */
-
 photoInput.addEventListener("change", async event => {
 
     const file =
         event.target.files &&
         event.target.files[0];
 
-
     if (!file) {
         return;
     }
 
-
     hideError();
 
-
     scanBtn.disabled = true;
-
     scanBtn.textContent =
-        "⏳ РАСПОЗНАЁМ...";
-
+        "⏳ ЗАГРУЖАЕМ ФОТО...";
 
     try {
 
-        const data =
-            await recognize(file);
+        const formData = new FormData();
 
+        formData.append(
+            "photo",
+            file,
+            file.name || "car.jpg"
+        );
 
-        /*
-           Даже если backend вернул странный ответ,
-           не ломаем интерфейс.
-        */
-
-        if (!data || !data.brand) {
-
-            throw new Error(
-                "ИИ не смог определить автомобиль."
+        const response =
+            await fetch(
+                API + "/api/cars/upload",
+                {
+                    method: "POST",
+                    body: formData
+                }
             );
 
+        if (!response.ok) {
+
+            const text =
+                await response.text();
+
+            throw new Error(
+                text || "Ошибка загрузки фотографии"
+            );
         }
 
-
-        showResult(
-            data,
-            file
-        );
-
-
-    } catch (error) {
-
-        console.error(
-            "Recognition error:",
-            error
-        );
-
-
-        /*
-           ГЛАВНОЕ ИЗМЕНЕНИЕ:
-           фото НЕ пропадает.
-
-           Если ИИ не распознал автомобиль,
-           открываем ручной ввод.
-        */
+        const uploadData =
+            await response.json();
 
         pending = {
-            file:file
+            file: file,
+            photo_url:
+                uploadData.photo_url
         };
-
 
         setResultPhoto(file);
 
-
         resultStatus.textContent =
-            "⚠️ НЕ УДАЛОСЬ ОПРЕДЕЛИТЬ";
-
+            "📸 ФОТО ЗАГРУЖЕНО";
 
         resultTitle.textContent =
-            "Автомобиль не распознан";
-
+            "Укажи автомобиль";
 
         resultConfidence.textContent =
-            "Введи данные самостоятельно";
-
+            "Заполни данные самостоятельно";
 
         resultReward.textContent =
             "+50 XP · РУЧНАЯ НАХОДКА";
 
-
         result.classList.add("show");
-
 
         manual.classList.add("show");
 
-
-        showError(
-            "ИИ не смог уверенно определить автомобиль. Фото сохранено — введи марку и модель самостоятельно."
-        );
-
-
         scrollToElement(manual);
 
-    }
+    } catch (error) {
 
+        console.error(
+            "Photo upload error:",
+            error
+        );
+
+        showError(
+            "Не удалось загрузить фотографию. Попробуй ещё раз."
+        );
+
+    }
 
     scanBtn.disabled = false;
 
     scanBtn.textContent =
-        "📸 СКАНИРОВАТЬ АВТОМОБИЛЬ";
-
-
-    /*
-       Нужно очистить value,
-       чтобы можно было снова сфотографировать
-       тот же файл.
-    */
+        "📸 ДОБАВИТЬ ФОТОГРАФИЮ";
 
     photoInput.value = "";
 
 });
-
-
 /* =========================================================
    MANUAL MODE
 ========================================================= */
@@ -2166,28 +2092,30 @@ async function saveToBackend(car) {
        отдельным backend endpoint.
     */
 
-    const body = {
+   const body = {
 
-        photo_file_id:
-            "webapp-" + Date.now(),
+    photo_url:
+        car.photo_url || "",
 
-        brand:
-            car.brand,
+    brand:
+        car.brand,
 
-        model:
-            car.model || null,
+    model:
+        car.model || null,
 
-        year:
-            car.year || null,
+    year:
+        car.year || null,
 
-        ai_confidence:
-            car.confidence || null,
+    ai_confidence:
+        null,
 
-        confirmed_by_user:true,
+    confirmed_by_user:
+        true,
 
-        location:null
+    location:
+        null
 
-    };
+};
 
 
     const response =
