@@ -10,27 +10,20 @@ class RecognizeResult(BaseModel):
     confidence: float
 
 
-class CarCreate(BaseModel):
+class CarOut(BaseModel):
+    id: int
+    photo_file_id: str
+
     brand: str
     model: Optional[str] = None
     year: Optional[str] = None
+
     ai_confidence: Optional[float] = None
-    confirmed_by_user: bool = True
+
+    confirmed_by_user: bool
+
     location: Optional[str] = None
 
-
-class CarOut(BaseModel):
-    id: int
-    photo_file_id: Optional[str] = None
-    photo_path: Optional[str] = None
-
-    brand: str
-    model: Optional[str]
-    year: Optional[str]
-
-    ai_confidence: Optional[float]
-    confirmed_by_user: bool
-    location: Optional[str]
     created_at: datetime
 
     class Config:
