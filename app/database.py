@@ -1,18 +1,28 @@
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+ from sqlalchemy.ext.asyncio import (
+    create_async_engine,
+    async_sessionmaker,
+    AsyncSession,
+)
 from sqlalchemy.orm import DeclarativeBase
 
 from app.config import settings
 
 
+DATABASE_URL = settings.DATABASE_URL
+
+print("DATABASE DRIVER:", DATABASE_URL.split("://")[0])
+
+
 engine = create_async_engine(
-    settings.DATABASE_URL,
-    echo=True
+    DATABASE_URL,
+    echo=True,
 )
 
 
 async_session = async_sessionmaker(
-    engine,
-    expire_on_commit=False
+    bind=engine,
+    class_=AsyncSession,
+    expire_on_commit=False,
 )
 
 
@@ -20,18 +30,17 @@ class Base(DeclarativeBase):
     pass
 
 
-async def get_db() -> AsyncSession:
+async def get_db():
     async with async_session() as session:
         yield session
 
 
 async def init_db():
-    # Важно: загружаем модели перед созданием таблиц
     from app import models
 
     print(
         "LOADED TABLES:",
-        Base.metadata.tables.keys()
+        list(Base.metadata.tables.keys()),
     )
 
     async with engine.begin() as conn:
