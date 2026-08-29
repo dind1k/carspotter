@@ -1,4 +1,3 @@
-```python
 from sqlalchemy import Column, Integer, String, Float, Boolean, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 from datetime import datetime
@@ -51,7 +50,6 @@ class Car(Base):
         nullable=False
     )
 
-    # Путь к настоящей фотографии автомобиля
     photo_url = Column(
         String,
         nullable=False
@@ -98,4 +96,3 @@ class Car(Base):
         "User",
         back_populates="cars"
     )
-```
