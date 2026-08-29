@@ -1,3 +1,4 @@
+````python
 import json
 import base64
 import httpx
@@ -8,98 +9,120 @@ from app.schemas import RecognizeResult
 
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 
-MODEL = "qwen/qwen2.5-vl-32b-instruct:free"
+
+# =========================================================
+# FREE VISION MODELS
+# =========================================================
+
+MODELS = [
+    "qwen/qwen2.5-vl-72b-instruct:free",
+    "qwen/qwen3-vl-235b-a22b-thinking:free",
+    "google/gemma-3-27b-it:free",
+]
 
 
-PROMPT = """Ты эксперт по автомобилям.
+# =========================================================
+# PROMPT
+# =========================================================
+
+PROMPT = """
+Ты эксперт по автомобилям.
 
 На фотографии изображён автомобиль.
+
 Определи:
+
 1. марку;
 2. модель;
 3. примерный год выпуска.
 
-Если точно определить год невозможно, укажи примерный диапазон.
+Будь максимально внимателен к:
+- форме кузова;
+- фарам;
+- решётке радиатора;
+- эмблеме;
+- дискам;
+- фонарям;
+- характерным элементам конкретной модели.
 
-Ответь СТРОГО валидным JSON без markdown, без ``` и без пояснений:
+Если точную модель определить невозможно, укажи наиболее вероятную.
+
+Если видишь только марку, model можешь оставить null.
+
+Если на фотографии вообще нет автомобиля:
+brand = "unknown"
+model = null
+year = null
+confidence = 0
+
+Ответь СТРОГО валидным JSON.
+
+Формат:
 
 {
-  "brand": "...",
-  "model": "...",
-  "year": "...",
-  "confidence": 0.0
+  "brand": "BMW",
+  "model": "M3",
+  "year": "2018-2020",
+  "confidence": 0.87
 }
 
 confidence — число от 0 до 1.
 
-Если на фотографии нет автомобиля или определить его невозможно:
-
-{
-  "brand": "unknown",
-  "model": null,
-  "year": null,
-  "confidence": 0
-}
+Никакого Markdown.
+Никаких пояснений.
+Только JSON.
 """
 
+
+# =========================================================
+# JSON CLEANER
+# =========================================================
+
+def clean_json(text: str) -> str:
+    """
+    Удаляет возможные ```json ... ``` вокруг ответа.
+    """
+
+    text = text.strip()
+
+    if text.startswith("```json"):
+        text = text[7:]
+
+    elif text.startswith("```"):
+        text = text[3:]
+
+    if text.endswith("```"):
+        text = text[:-3]
+
+    return text.strip()
+
+
+# =========================================================
+# RECOGNITION
+# =========================================================
 
 async def recognize_car(
     image_bytes: bytes,
     mime_type: str = "image/jpeg"
 ) -> RecognizeResult:
 
-    print("========================================")
-    print("AI RECOGNITION START")
-    print("MODEL:", MODEL)
-    print("IMAGE SIZE:", len(image_bytes))
-    print("MIME TYPE:", mime_type)
-    print("API KEY EXISTS:", bool(settings.OPENROUTER_API_KEY))
-    print("========================================")
-
-
-    if not image_bytes:
-        raise ValueError("Image is empty")
-
-
     if not settings.OPENROUTER_API_KEY:
         raise RuntimeError(
-            "OPENROUTER_API_KEY is not configured"
+            "OPENROUTER_API_KEY не настроен"
         )
 
+    if not image_bytes:
+        raise RuntimeError(
+            "Получено пустое изображение"
+        )
 
     image_b64 = base64.b64encode(
         image_bytes
     ).decode("utf-8")
 
-
-    payload = {
-        "model": MODEL,
-
-        "messages": [
-            {
-                "role": "user",
-
-                "content": [
-                    {
-                        "type": "text",
-                        "text": PROMPT
-                    },
-
-                    {
-                        "type": "image_url",
-
-                        "image_url": {
-                            "url": (
-                                f"data:{mime_type};"
-                                f"base64,{image_b64}"
-                            )
-                        }
-                    }
-                ]
-            }
-        ]
-    }
-
+    image_url = (
+        f"data:{mime_type};base64,{image_b64}"
+    )
 
     headers = {
         "Authorization":
@@ -112,158 +135,301 @@ async def recognize_car(
             "https://happy-respect-production-5227.up.railway.app",
 
         "X-Title":
-            "CarSpotter"
+            "CarSpotter",
     }
 
 
-    try:
-
-        async with httpx.AsyncClient(
-            timeout=60.0
-        ) as client:
-
-            response = await client.post(
-                OPENROUTER_URL,
-                json=payload,
-                headers=headers
-            )
+    last_error = None
 
 
-    except Exception as e:
+    # =====================================================
+    # TRY MODELS ONE BY ONE
+    # =====================================================
 
-        print("========================================")
-        print("OPENROUTER CONNECTION ERROR")
-        print(repr(e))
-        print("========================================")
+    async with httpx.AsyncClient(
+        timeout=60
+    ) as client:
 
-        raise
+        for model in MODELS:
 
-
-    print("========================================")
-    print("OPENROUTER STATUS:", response.status_code)
-    print("OPENROUTER RESPONSE:")
-    print(response.text)
-    print("========================================")
-
-
-    if response.status_code != 200:
-
-        raise RuntimeError(
-            f"OpenRouter returned "
-            f"{response.status_code}: "
-            f"{response.text}"
-        )
+            print("=" * 60)
+            print("AI RECOGNITION")
+            print("MODEL:", model)
+            print("IMAGE SIZE:", len(image_bytes))
+            print("MIME TYPE:", mime_type)
+            print("=" * 60)
 
 
-    try:
+            payload = {
 
-        data = response.json()
+                "model": model,
 
-    except Exception as e:
+                "messages": [
 
-        print(
-            "FAILED TO PARSE OPENROUTER JSON:",
-            repr(e)
-        )
+                    {
+                        "role": "user",
 
-        raise RuntimeError(
-            "OpenRouter returned invalid JSON"
-        )
+                        "content": [
+
+                            {
+                                "type": "text",
+                                "text": PROMPT
+                            },
+
+                            {
+                                "type": "image_url",
+
+                                "image_url": {
+                                    "url": image_url
+                                }
+                            }
+
+                        ]
+                    }
+
+                ],
+
+                "temperature": 0.1,
+
+                "max_tokens": 300,
+            }
 
 
-    try:
+            try:
 
-        text = data["choices"][0]["message"]["content"]
-
-    except Exception:
-
-        print(
-            "UNEXPECTED OPENROUTER STRUCTURE:",
-            data
-        )
-
-        raise RuntimeError(
-            "Unexpected OpenRouter response"
-        )
+                response = await client.post(
+                    OPENROUTER_URL,
+                    json=payload,
+                    headers=headers
+                )
 
 
-    print("AI RAW TEXT:")
-    print(text)
+                print(
+                    "OPENROUTER STATUS:",
+                    response.status_code
+                )
 
 
-    if isinstance(text, list):
+                # =========================================
+                # MODEL UNAVAILABLE
+                # =========================================
 
-        parts = []
+                if response.status_code in (
+                    404,
+                    429,
+                    500,
+                    502,
+                    503,
+                    504
+                ):
 
-        for item in text:
-
-            if isinstance(item, dict):
-
-                if item.get("type") == "text":
-
-                    parts.append(
-                        item.get("text", "")
+                    print(
+                        "MODEL UNAVAILABLE:",
+                        model
                     )
 
-        text = "".join(parts)
+                    print(
+                        response.text[:1000]
+                    )
+
+                    last_error = RuntimeError(
+                        f"OpenRouter {response.status_code}"
+                    )
+
+                    continue
 
 
-    text = str(text).strip()
+                # =========================================
+                # OTHER HTTP ERROR
+                # =========================================
+
+                response.raise_for_status()
 
 
-    if text.startswith("```json"):
-
-        text = text[7:]
-
-    elif text.startswith("```"):
-
-        text = text[3:]
+                data = response.json()
 
 
-    if text.endswith("```"):
+                # =========================================
+                # EXTRACT TEXT
+                # =========================================
 
-        text = text[:-3]
+                try:
 
+                    text = (
+                        data["choices"][0]
+                        ["message"]["content"]
+                    )
 
-    text = text.strip()
+                except (
+                    KeyError,
+                    IndexError,
+                    TypeError
+                ):
 
-
-    print("AI CLEAN JSON:")
-    print(text)
-
-
-    try:
-
-        parsed = json.loads(text)
-
-    except Exception as e:
-
-        print("JSON PARSE ERROR:", repr(e))
-
-        raise RuntimeError(
-            f"AI returned invalid JSON: {text}"
-        )
+                    raise RuntimeError(
+                        f"Некорректный ответ OpenRouter: {data}"
+                    )
 
 
-    return RecognizeResult(
+                if not isinstance(text, str):
+                    raise RuntimeError(
+                        "OpenRouter вернул ответ не строкой"
+                    )
 
-        brand=parsed.get(
-            "brand",
-            "unknown"
-        ),
 
-        model=parsed.get(
-            "model"
-        ),
+                print(
+                    "AI RAW RESPONSE:",
+                    text[:1000]
+                )
 
-        year=parsed.get(
-            "year"
-        ),
 
-        confidence=float(
-            parsed.get(
-                "confidence",
-                0
-            )
-        )
+                # =========================================
+                # CLEAN JSON
+                # =========================================
+
+                text = clean_json(text)
+
+
+                # =========================================
+                # PARSE JSON
+                # =========================================
+
+                try:
+
+                    parsed = json.loads(text)
+
+                except json.JSONDecodeError as error:
+
+                    print(
+                        "JSON PARSE ERROR:",
+                        error
+                    )
+
+                    last_error = RuntimeError(
+                        "ИИ вернул некорректный JSON"
+                    )
+
+                    continue
+
+
+                # =========================================
+                # NORMALIZE
+                # =========================================
+
+                brand = parsed.get(
+                    "brand",
+                    "unknown"
+                )
+
+                model_name = parsed.get(
+                    "model"
+                )
+
+                year = parsed.get(
+                    "year"
+                )
+
+                confidence = parsed.get(
+                    "confidence",
+                    0
+                )
+
+
+                try:
+
+                    confidence = float(
+                        confidence
+                    )
+
+                except (
+                    TypeError,
+                    ValueError
+                ):
+
+                    confidence = 0
+
+
+                # Защита confidence
+
+                confidence = max(
+                    0,
+                    min(
+                        1,
+                        confidence
+                    )
+                )
+
+
+                # =========================================
+                # SUCCESS
+                # =========================================
+
+                print("=" * 60)
+                print("AI SUCCESS")
+                print("BRAND:", brand)
+                print("MODEL:", model_name)
+                print("YEAR:", year)
+                print(
+                    "CONFIDENCE:",
+                    confidence
+                )
+                print("=" * 60)
+
+
+                return RecognizeResult(
+
+                    brand=str(
+                        brand or "unknown"
+                    ),
+
+                    model=(
+                        str(model_name)
+                        if model_name
+                        else None
+                    ),
+
+                    year=(
+                        str(year)
+                        if year
+                        else None
+                    ),
+
+                    confidence=confidence
+
+                )
+
+
+            except httpx.HTTPError as error:
+
+                print(
+                    "HTTP ERROR:",
+                    repr(error)
+                )
+
+                last_error = error
+
+                continue
+
+
+            except Exception as error:
+
+                print(
+                    "RECOGNITION ERROR:",
+                    repr(error)
+                )
+
+                last_error = error
+
+                continue
+
+
+    # =====================================================
+    # ALL MODELS FAILED
+    # =====================================================
+
+    raise RuntimeError(
+        "Все бесплатные модели OpenRouter "
+        "временно недоступны. "
+        f"Последняя ошибка: {last_error}"
     )
+````
