@@ -326,4 +326,4 @@ async def recognize_car(
 
         confidence=confidence
     )
-````
+
