@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
 
-<title>CarSpotter 2.0</title>
+<title>CarSpotter</title>
 
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&family=Oswald:wght@500;600;700&display=swap');
@@ -36,6 +36,15 @@ body{
     background:var(--bg);
     color:var(--text);
     font-family:Inter,sans-serif;
+}
+
+button,
+input{
+    font-family:inherit;
+}
+
+button{
+    cursor:pointer;
 }
 
 .app{
@@ -87,20 +96,14 @@ main{
     display:none;
 }
 
-.level-card,
-.goal,
-.hunt-card,
-.collection-card,
-.achievement{
-    background:var(--steel);
-    border:1px solid var(--line);
-    border-radius:var(--r);
-}
+/* LEVEL */
 
 .level-card{
     padding:16px;
     margin-bottom:14px;
     background:linear-gradient(135deg,#22262a,#1b1f23);
+    border:1px solid var(--line);
+    border-radius:var(--r);
 }
 
 .level-row{
@@ -134,6 +137,8 @@ main{
     border-radius:99px;
 }
 
+/* STATS */
+
 .stats{
     display:grid;
     grid-template-columns:repeat(3,1fr);
@@ -160,14 +165,13 @@ main{
     letter-spacing:.06em;
 }
 
-.section-title{
-    font:600 18px Oswald;
-    text-transform:uppercase;
-    margin:20px 0 10px;
-}
+/* GOAL */
 
 .goal{
     padding:15px;
+    background:var(--steel);
+    border:1px solid var(--line);
+    border-radius:var(--r);
 }
 
 .goal-top{
@@ -184,6 +188,14 @@ main{
     font:700 11px 'JetBrains Mono';
     color:var(--yellow);
     margin-top:10px;
+}
+
+/* FILTERS */
+
+.section-title{
+    font:600 18px Oswald;
+    text-transform:uppercase;
+    margin:20px 0 10px;
 }
 
 .chips{
@@ -209,6 +221,8 @@ main{
     border-color:var(--yellow);
 }
 
+/* GARAGE */
+
 .grid{
     display:grid;
     grid-template-columns:1fr 1fr;
@@ -220,14 +234,12 @@ main{
     border:1px solid var(--line);
     border-radius:14px;
     overflow:hidden;
+    position:relative;
 }
 
 .photo{
-    height:120px;
-    background:var(--tint,#364);
-    display:flex;
-    align-items:center;
-    justify-content:center;
+    height:150px;
+    background:#272c30;
     position:relative;
     overflow:hidden;
 }
@@ -239,9 +251,13 @@ main{
     display:block;
 }
 
-.car svg{
-    width:65%;
-    color:rgba(242,237,226,.88);
+.photo-placeholder{
+    width:100%;
+    height:100%;
+    display:grid;
+    place-items:center;
+    color:var(--dim);
+    font-size:30px;
 }
 
 .rarity{
@@ -285,10 +301,57 @@ main{
     margin-top:3px;
 }
 
+.delete-car{
+    position:absolute;
+    bottom:8px;
+    right:8px;
+    border:0;
+    width:28px;
+    height:28px;
+    border-radius:50%;
+    background:#15181bcc;
+    color:var(--dim);
+    font-size:13px;
+}
+
+.delete-car:hover{
+    color:var(--red);
+}
+
+/* EMPTY */
+
+.empty{
+    padding:40px 20px;
+    text-align:center;
+    color:var(--dim);
+}
+
+.empty-icon{
+    font-size:48px;
+    margin-bottom:12px;
+}
+
+.empty-title{
+    color:var(--text);
+    font:600 22px Oswald;
+    text-transform:uppercase;
+    margin-bottom:8px;
+}
+
+.empty p{
+    font-size:12px;
+    line-height:1.5;
+}
+
+/* HUNT */
+
 .hunt-card{
     text-align:center;
     padding:26px 18px;
     margin-top:20px;
+    background:var(--steel);
+    border:1px solid var(--line);
+    border-radius:var(--r);
 }
 
 .target{
@@ -324,11 +387,10 @@ main{
     font-weight:800;
     font-size:14px;
     margin-top:12px;
-    cursor:pointer;
 }
 
 .primary:disabled{
-    opacity:.6;
+    opacity:.5;
     cursor:not-allowed;
 }
 
@@ -341,138 +403,20 @@ main{
     color:var(--text);
     font-weight:700;
     margin-top:8px;
-    cursor:pointer;
 }
 
-.hunt-goal{
-    margin-top:16px;
-    text-align:left;
-    padding:14px;
-    background:#1b1f23;
-    border-radius:12px;
-}
-
-.hunt-goal small{
-    color:var(--dim);
-    font:600 10px 'JetBrains Mono';
-    text-transform:uppercase;
-}
-
-.collection-card{
-    padding:14px;
-    margin-bottom:10px;
-}
-
-.collection-head{
-    display:flex;
-    justify-content:space-between;
-}
-
-.collection-card h3{
-    margin:0;
-    font-size:15px;
-}
-
-.collection-card p{
-    font-size:12px;
-    color:var(--dim);
-    margin:5px 0;
-}
-
-.collection-card .progress{
-    margin:10px 0 5px;
-}
-
-.collection-card small{
-    color:var(--yellow);
-    font:600 10px 'JetBrains Mono';
-}
-
-.tabs{
-    display:flex;
-    gap:8px;
-    margin-bottom:14px;
-}
-
-.tab-mini{
-    flex:1;
-    padding:10px;
-    border-radius:10px;
-    background:var(--steel);
-    border:1px solid var(--line);
-    color:var(--dim);
-    font-weight:700;
-    cursor:pointer;
-}
-
-.tab-mini.active{
-    color:#15181b;
-    background:var(--yellow);
-    border-color:var(--yellow);
-}
-
-.achievement{
-    padding:13px;
-    display:flex;
-    gap:12px;
-    margin-bottom:9px;
-}
-
-.badge{
-    width:42px;
-    height:42px;
-    border-radius:12px;
-    background:#1b1f23;
-    display:grid;
-    place-items:center;
-    font-size:21px;
-}
-
-.achievement b{
-    font-size:13px;
-}
-
-.achievement p{
-    font-size:11px;
-    color:var(--dim);
-    margin:4px 0;
-}
-
-.tabbar{
-    display:flex;
-    background:#1b1f23;
-    border-top:1px solid var(--line);
-    padding-bottom:env(safe-area-inset-bottom);
-}
-
-.tab{
-    flex:1;
-    background:none;
-    border:0;
-    color:var(--dim);
-    padding:11px 4px 9px;
-    font-size:10px;
-    font-weight:700;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    gap:4px;
-    cursor:pointer;
-}
-
-.tab.active{
-    color:var(--yellow);
-}
-
-.tab .ico{
-    font-size:20px;
-}
+/* CAMERA */
 
 .camera-box{
     height:360px;
     border:1px solid var(--line);
     border-radius:18px;
-    background:radial-gradient(ellipse,#262b2f,#15181b 70%);
+    background:
+        radial-gradient(
+            ellipse,
+            #262b2f,
+            #15181b 70%
+        );
     display:grid;
     place-items:center;
     position:relative;
@@ -522,35 +466,36 @@ main{
     color:var(--dim);
     font:500 12px 'JetBrains Mono';
     line-height:1.6;
+    padding:30px;
 }
+
+/* RESULT */
 
 .result{
     display:none;
+    margin-top:18px;
 }
 
 .result.show{
     display:block;
 }
 
+.result-photo{
+    height:230px;
+    border-radius:16px;
+    background:#252a2e;
+    overflow:hidden;
+    margin-bottom:16px;
+}
+
+.result-photo img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+}
+
 .result-card{
     text-align:center;
-}
-
-.result-photo{
-    height:190px;
-    border-radius:16px;
-    background:#345248;
-    background-size:cover;
-    background-position:center;
-    display:grid;
-    place-items:center;
-    margin-bottom:16px;
-    overflow:hidden;
-}
-
-.result-photo svg{
-    width:50%;
-    color:var(--text);
 }
 
 .new{
@@ -562,6 +507,7 @@ main{
 .result h2{
     font:600 28px Oswald;
     margin:8px 0 0;
+    text-transform:uppercase;
 }
 
 .confidence{
@@ -570,12 +516,177 @@ main{
     margin:10px;
 }
 
-.loading{
-    text-align:center;
-    color:var(--dim);
-    font:600 12px 'JetBrains Mono';
-    padding:20px;
+/* MANUAL FORM */
+
+.manual{
+    display:none;
+    text-align:left;
+    margin-top:18px;
 }
+
+.manual.show{
+    display:block;
+}
+
+.manual-title{
+    font:600 22px Oswald;
+    text-transform:uppercase;
+    margin-bottom:6px;
+}
+
+.manual-description{
+    color:var(--dim);
+    font-size:12px;
+    line-height:1.5;
+    margin-bottom:16px;
+}
+
+.field{
+    margin-bottom:11px;
+}
+
+.field label{
+    display:block;
+    color:var(--dim);
+    font:600 10px 'JetBrains Mono';
+    text-transform:uppercase;
+    margin-bottom:6px;
+}
+
+.field input{
+    width:100%;
+    padding:14px;
+    background:#181c1f;
+    color:var(--text);
+    border:1px solid var(--line);
+    border-radius:11px;
+    outline:none;
+    font-size:14px;
+}
+
+.field input:focus{
+    border-color:var(--yellow);
+}
+
+/* COLLECTION */
+
+.collection-card{
+    padding:14px;
+    margin-bottom:10px;
+    background:var(--steel);
+    border:1px solid var(--line);
+    border-radius:var(--r);
+}
+
+.collection-head{
+    display:flex;
+    justify-content:space-between;
+}
+
+.collection-card h3{
+    margin:0;
+    font-size:15px;
+}
+
+.collection-card p{
+    font-size:12px;
+    color:var(--dim);
+    margin:5px 0;
+}
+
+.collection-card .progress{
+    margin:10px 0 5px;
+}
+
+.collection-card small{
+    color:var(--yellow);
+    font:600 10px 'JetBrains Mono';
+}
+
+.tabs{
+    display:flex;
+    gap:8px;
+    margin-bottom:14px;
+}
+
+.tab-mini{
+    flex:1;
+    padding:10px;
+    border-radius:10px;
+    background:var(--steel);
+    border:1px solid var(--line);
+    color:var(--dim);
+    font-weight:700;
+}
+
+.tab-mini.active{
+    color:#15181b;
+    background:var(--yellow);
+    border-color:var(--yellow);
+}
+
+.achievement{
+    padding:13px;
+    display:flex;
+    gap:12px;
+    margin-bottom:9px;
+    background:var(--steel);
+    border:1px solid var(--line);
+    border-radius:var(--r);
+}
+
+.badge{
+    width:42px;
+    height:42px;
+    border-radius:12px;
+    background:#1b1f23;
+    display:grid;
+    place-items:center;
+    font-size:21px;
+}
+
+.achievement b{
+    font-size:13px;
+}
+
+.achievement p{
+    font-size:11px;
+    color:var(--dim);
+    margin:4px 0;
+}
+
+/* NAV */
+
+.tabbar{
+    display:flex;
+    background:#1b1f23;
+    border-top:1px solid var(--line);
+    padding-bottom:env(safe-area-inset-bottom);
+}
+
+.tab{
+    flex:1;
+    background:none;
+    border:0;
+    color:var(--dim);
+    padding:11px 4px 9px;
+    font-size:10px;
+    font-weight:700;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:4px;
+}
+
+.tab.active{
+    color:var(--yellow);
+}
+
+.tab .ico{
+    font-size:20px;
+}
+
+/* TOAST */
 
 .toast{
     position:fixed;
@@ -591,7 +702,7 @@ main{
     font-weight:700;
     font-size:13px;
     transition:.25s;
-    z-index:5;
+    z-index:20;
     pointer-events:none;
     white-space:nowrap;
 }
@@ -599,6 +710,35 @@ main{
 .toast.show{
     opacity:1;
     transform:translate(-50%,0);
+}
+
+/* LOADER */
+
+.loader{
+    display:none;
+    text-align:center;
+    padding:20px;
+    color:var(--dim);
+}
+
+.loader.show{
+    display:block;
+}
+
+.spinner{
+    width:28px;
+    height:28px;
+    margin:0 auto 10px;
+    border:3px solid #333;
+    border-top-color:var(--yellow);
+    border-radius:50%;
+    animation:spin .8s linear infinite;
+}
+
+@keyframes spin{
+    to{
+        transform:rotate(360deg);
+    }
 }
 </style>
 </head>
@@ -617,12 +757,11 @@ main{
     </div>
 </header>
 
-
 <main>
 
-<!-- =========================
-     GARAGE
-========================= -->
+<!-- ===================================================== -->
+<!-- GARAGE -->
+<!-- ===================================================== -->
 
 <section class="screen active" id="garage">
 
@@ -666,8 +805,8 @@ main{
         </div>
 
         <div class="stat">
-            <b>0</b>
-            <span>редкая</span>
+            <b id="rareCount">0</b>
+            <span>редких</span>
         </div>
 
     </div>
@@ -678,6 +817,7 @@ main{
         <div class="goal-top">
 
             <div>
+
                 <div class="eyebrow">
                     🎯 цель дня
                 </div>
@@ -685,6 +825,7 @@ main{
                 <div class="goal-title">
                     Найди новую марку
                 </div>
+
             </div>
 
             <div class="xp">
@@ -709,35 +850,48 @@ main{
     </div>
 
 
-    <div class="chips">
-
-        <button class="chip active">
+    <div class="chips" id="brandFilters">
+        <button class="chip active" data-brand="">
             Все
         </button>
+    </div>
 
-        <button class="chip">
-            BMW
-        </button>
 
-        <button class="chip">
-            Audi
-        </button>
+    <div class="loader" id="garageLoader">
 
-        <button class="chip">
-            Toyota
-        </button>
+        <div class="spinner"></div>
+
+        Загружаем гараж...
 
     </div>
 
 
     <div class="grid" id="grid"></div>
 
+
+    <div class="empty" id="garageEmpty" style="display:none">
+
+        <div class="empty-icon">
+            🚗
+        </div>
+
+        <div class="empty-title">
+            Гараж пуст
+        </div>
+
+        <p>
+            Отправляйся на охоту и сфотографируй
+            свой первый автомобиль.
+        </p>
+
+    </div>
+
 </section>
 
 
-<!-- =========================
-     HUNT
-========================= -->
+<!-- ===================================================== -->
+<!-- HUNT -->
+<!-- ===================================================== -->
 
 <section class="screen" id="hunt">
 
@@ -758,19 +912,27 @@ main{
         </p>
 
 
+        <!-- CAMERA -->
+
+        <div class="camera-box" id="cameraBox">
+
+            <div class="camera-hint">
+
+                📸<br>
+
+                Нажми кнопку ниже,<br>
+                чтобы сфотографировать автомобиль
+
+            </div>
+
+        </div>
+
+
         <button
             class="primary"
             id="scanBtn"
         >
             📸 СКАНИРОВАТЬ АВТОМОБИЛЬ
-        </button>
-
-
-        <button
-            class="secondary"
-            id="demoBtn"
-        >
-            Показать демо-распознавание
         </button>
 
 
@@ -782,8 +944,8 @@ main{
 
             <div
                 style="
-                    font-weight:700;
-                    margin-top:5px
+                font-weight:700;
+                margin-top:5px;
                 "
             >
                 🇯🇵 Найди японский автомобиль
@@ -798,27 +960,16 @@ main{
     </div>
 
 
+    <!-- ================================================= -->
     <!-- RESULT -->
+    <!-- ================================================= -->
 
-    <div
-        class="result"
-        id="result"
-    >
+    <div class="result" id="result">
 
         <div class="result-card">
 
-            <div
-                class="result-photo"
-                id="resultPhoto"
-            >
-
-                <svg
-                    viewBox="0 0 120 60"
-                    fill="none"
-                >
-                    <use href="#carIcon"></use>
-                </svg>
-
+            <div class="result-photo">
+                <img id="resultImage" alt="Автомобиль">
             </div>
 
 
@@ -830,14 +981,14 @@ main{
             </div>
 
 
-            <h2 id="resultName">
+            <h2 id="resultTitle">
                 TOYOTA SUPRA
             </h2>
 
 
             <div
                 class="confidence"
-                id="resultConfidence"
+                id="confidence"
             >
                 96% УВЕРЕННОСТЬ ИИ
             </div>
@@ -847,13 +998,15 @@ main{
                 class="reward"
                 id="resultReward"
             >
-                +150 XP · РЕДКАЯ НАХОДКА
+                +50 XP · РЕДКАЯ
             </div>
 
 
+            <!-- AI result buttons -->
+
             <button
                 class="primary"
-                id="addDemo"
+                id="saveRecognized"
             >
                 ДОБАВИТЬ В КОЛЛЕКЦИЮ
             </button>
@@ -863,19 +1016,119 @@ main{
                 class="secondary"
                 id="editResult"
             >
-                ✏️ Исправить результат
+                ✏️ ИСПРАВИТЬ РЕЗУЛЬТАТ
+            </button>
+
+        </div>
+
+
+        <!-- ================================================= -->
+        <!-- MANUAL -->
+        <!-- ================================================= -->
+
+        <div
+            class="manual"
+            id="manualForm"
+        >
+
+            <div class="manual-title">
+                Укажи автомобиль
+            </div>
+
+            <div class="manual-description">
+                ИИ не смог уверенно определить автомобиль.
+                Ничего страшного — введи данные самостоятельно.
+            </div>
+
+
+            <div class="field">
+
+                <label>
+                    Марка *
+                </label>
+
+                <input
+                    id="manualBrand"
+                    type="text"
+                    placeholder="Например, BMW"
+                >
+
+            </div>
+
+
+            <div class="field">
+
+                <label>
+                    Модель
+                </label>
+
+                <input
+                    id="manualModel"
+                    type="text"
+                    placeholder="Например, M3"
+                >
+
+            </div>
+
+
+            <div class="field">
+
+                <label>
+                    Год
+                </label>
+
+                <input
+                    id="manualYear"
+                    type="number"
+                    min="1886"
+                    max="2030"
+                    placeholder="Например, 2020"
+                >
+
+            </div>
+
+
+            <button
+                class="primary"
+                id="saveManual"
+            >
+                ДОБАВИТЬ В КОЛЛЕКЦИЮ
+            </button>
+
+
+            <button
+                class="secondary"
+                id="cancelManual"
+            >
+                ← НАЗАД
             </button>
 
         </div>
 
     </div>
 
+
+    <!-- ================================================= -->
+    <!-- RECOGNITION LOADER -->
+    <!-- ================================================= -->
+
+    <div
+        class="loader"
+        id="recognitionLoader"
+    >
+
+        <div class="spinner"></div>
+
+        ИИ рассматривает автомобиль...
+
+    </div>
+
 </section>
 
 
-<!-- =========================
-     COLLECTION
-========================= -->
+<!-- ===================================================== -->
+<!-- COLLECTION -->
+<!-- ===================================================== -->
 
 <section
     class="screen"
@@ -913,9 +1166,9 @@ main{
 </main>
 
 
-<!-- =========================
-     NAVIGATION
-========================= -->
+<!-- ===================================================== -->
+<!-- NAVIGATION -->
+<!-- ===================================================== -->
 
 <nav class="tabbar">
 
@@ -950,6 +1203,8 @@ main{
 </div>
 
 
+<!-- REAL CAMERA INPUT -->
+
 <input
     id="photoInput"
     type="file"
@@ -963,72 +1218,8 @@ main{
     class="toast"
     id="toast"
 >
-    ✓ Добавлено в коллекцию!
+    ✓ Готово
 </div>
-
-
-<!-- SVG ICON -->
-
-<svg
-    width="0"
-    height="0"
-    style="position:absolute"
->
-
-<symbol
-    id="carIcon"
-    viewBox="0 0 120 60"
->
-
-<path
-    d="
-        M8 42
-        C6 42 5 40 6 37
-        L11 26
-        C12.5 22 16 19 20.5 19
-        H34
-        L42 9
-        C44 6.5 47 5 50.5 5
-        H74.5
-        C78.5 5 82 7 84.5 10.5
-        L92.5 21
-        L101.5 23
-        C107.5 24.5 113 30 113 36
-        V42
-    "
-    stroke="currentColor"
-    stroke-width="3.4"
-    fill="none"
-    stroke-linecap="round"
-></path>
-
-<path
-    d="M6 42H114"
-    stroke="currentColor"
-    stroke-width="3.4"
-></path>
-
-<circle
-    cx="30"
-    cy="45"
-    r="9"
-    fill="#15181b"
-    stroke="currentColor"
-    stroke-width="3.4"
-></circle>
-
-<circle
-    cx="90"
-    cy="45"
-    r="9"
-    fill="#15181b"
-    stroke="currentColor"
-    stroke-width="3.4"
-></circle>
-
-</symbol>
-
-</svg>
 
 
 <script>
@@ -1041,54 +1232,93 @@ const API =
     "https://carspotter-production-5255.up.railway.app";
 
 
-const tg =
-    window.Telegram?.WebApp;
+/* =========================================================
+   TELEGRAM
+========================================================= */
 
+const tg =
+    window.Telegram?.WebApp || null;
 
 if(tg){
 
     tg.ready();
+
     tg.expand();
 
 }
 
 
 /* =========================================================
-   LOCAL DATA
+   STATE
 ========================================================= */
 
 let cars = [];
 
-
 let pending = null;
 
+let currentFilter = "";
 
-const input =
-    document.getElementById("photoInput");
 
+/* =========================================================
+   ELEMENTS
+========================================================= */
 
 const grid =
     document.getElementById("grid");
 
+const carCount =
+    document.getElementById("carCount");
 
-const result =
-    document.getElementById("result");
+const brandCount =
+    document.getElementById("brandCount");
 
+const rareCount =
+    document.getElementById("rareCount");
+
+const garageEmpty =
+    document.getElementById("garageEmpty");
+
+const garageLoader =
+    document.getElementById("garageLoader");
+
+const photoInput =
+    document.getElementById("photoInput");
 
 const scanBtn =
     document.getElementById("scanBtn");
 
+const result =
+    document.getElementById("result");
 
-const demoBtn =
-    document.getElementById("demoBtn");
+const resultImage =
+    document.getElementById("resultImage");
 
+const resultTitle =
+    document.getElementById("resultTitle");
 
-const addDemo =
-    document.getElementById("addDemo");
+const resultStatus =
+    document.getElementById("resultStatus");
 
+const confidence =
+    document.getElementById("confidence");
 
-const toast =
-    document.getElementById("toast");
+const resultReward =
+    document.getElementById("resultReward");
+
+const recognitionLoader =
+    document.getElementById("recognitionLoader");
+
+const manualForm =
+    document.getElementById("manualForm");
+
+const manualBrand =
+    document.getElementById("manualBrand");
+
+const manualModel =
+    document.getElementById("manualModel");
+
+const manualYear =
+    document.getElementById("manualYear");
 
 
 /* =========================================================
@@ -1096,6 +1326,9 @@ const toast =
 ========================================================= */
 
 function showToast(text){
+
+    const toast =
+        document.getElementById("toast");
 
     toast.textContent = text;
 
@@ -1113,53 +1346,47 @@ function showToast(text){
    RARITY
 ========================================================= */
 
-function rarityFor(x){
+function rarityFor(car){
 
     const text =
         (
-            (x.brand || "") +
+            (car.brand || "") +
             " " +
-            (x.model || "")
+            (car.model || "")
         ).toLowerCase();
 
 
     if(
-        /ferrari|lamborghini|mclaren/
-            .test(text)
+        /ferrari|lamborghini|mclaren|koenigsegg|pagani/.test(text)
     ){
 
         return [
             "legendary",
-            "ЛЕГЕНДАРНАЯ",
-            "#5a3925"
+            "ЛЕГЕНДАРНАЯ"
         ];
 
     }
 
 
     if(
-        /supra|gtr|911|m3|amg|rs /
-            .test(text)
+        /supra|gtr|911|m3|m4|amg|rs6|rs7|gt3/.test(text)
     ){
 
         return [
             "rare",
-            "РЕДКАЯ",
-            "#443a58"
+            "РЕДКАЯ"
         ];
 
     }
 
 
     if(
-        /bmw|mercedes|audi|porsche/
-            .test(text)
+        /bmw|mercedes|audi|porsche|lexus|jaguar/.test(text)
     ){
 
         return [
             "uncommon",
-            "НЕОБЫЧНАЯ",
-            "#2c4258"
+            "НЕОБЫЧНАЯ"
         ];
 
     }
@@ -1167,36 +1394,70 @@ function rarityFor(x){
 
     return [
         "common",
-        "ОБЫЧНАЯ",
-        "#33502f"
+        "ОБЫЧНАЯ"
     ];
 
 }
 
 
 /* =========================================================
-   CHECK DUPLICATE
+   LOAD IMAGE FROM BACKEND
 ========================================================= */
 
-function isNewCar(x){
+async function loadCarImage(car){
 
-    return !cars.some(c => {
+    if(
+        !tg ||
+        !tg.initData ||
+        !car.id
+    ){
 
-        const brand =
-            c.brand || c[0] || "";
+        return null;
 
-        const model =
-            c.model || c[1] || "";
+    }
 
-        return (
-            brand.toLowerCase() ===
-            (x.brand || "").toLowerCase()
-            &&
-            model.toLowerCase() ===
-            (x.model || "").toLowerCase()
+
+    try{
+
+        const response =
+            await fetch(
+                API +
+                "/api/cars/" +
+                car.id +
+                "/photo",
+                {
+                    headers:{
+                        "X-Telegram-Init-Data":
+                            tg.initData
+                    }
+                }
+            );
+
+
+        if(!response.ok){
+
+            return null;
+
+        }
+
+
+        const blob =
+            await response.blob();
+
+
+        return URL.createObjectURL(blob);
+
+    }
+    catch(error){
+
+        console.warn(
+            "Image load error:",
+            error
         );
 
-    });
+        return null;
+
+    }
 
 }
 
@@ -1205,43 +1466,42 @@ function isNewCar(x){
    RENDER GARAGE
 ========================================================= */
 
-function renderCars(){
+async function renderGarage(){
+
+    const filtered =
+        currentFilter
+            ? cars.filter(
+                car =>
+                    (
+                        car.brand || ""
+                    ).toLowerCase()
+                    ===
+                    currentFilter.toLowerCase()
+            )
+            : cars;
+
 
     grid.innerHTML = "";
 
 
-    cars.forEach(c => {
+    if(!filtered.length){
 
-        const brand =
-            c.brand || c[0] || "UNKNOWN";
+        garageEmpty.style.display =
+            "block";
 
+        return;
 
-        const model =
-            c.model ||
-            c[1] ||
-            "Неизвестная модель";
+    }
 
 
-        const year =
-            c.year ||
-            c[2] ||
-            "—";
+    garageEmpty.style.display =
+        "none";
 
+
+    for(const car of filtered){
 
         const rarity =
-            c.rarity ||
-            (
-                c[4]
-                ?
-                [c[4], c[5], c[3]]
-                :
-                rarityFor(c)
-            );
-
-
-        const photo =
-            c.photo_url || null;
-
+            rarityFor(car);
 
         const card =
             document.createElement("div");
@@ -1249,125 +1509,99 @@ function renderCars(){
         card.className = "car";
 
 
-        const photoBox =
-            document.createElement("div");
+        card.innerHTML = `
 
-        photoBox.className = "photo";
+            <div class="photo">
+
+                <div class="photo-placeholder">
+                    📷
+                </div>
+
+                <span
+                    class="rarity ${rarity[0]}"
+                >
+                    ${rarity[1]}
+                </span>
+
+            </div>
+
+            <div class="car-info">
+
+                <div class="brand">
+                    ${escapeHtml(
+                        car.brand || "UNKNOWN"
+                    )}
+                </div>
+
+                <div class="model">
+                    ${escapeHtml(
+                        car.model || "Неизвестная модель"
+                    )}
+                    ·
+                    ${escapeHtml(
+                        car.year || "—"
+                    )}
+                </div>
+
+            </div>
+
+            <button
+                class="delete-car"
+                title="Удалить"
+            >
+                ×
+            </button>
+
+        `;
 
 
-        photoBox.style.setProperty(
-            "--tint",
-            rarity[2]
-        );
+        grid.appendChild(card);
 
 
-        if(photo){
+        const image =
+            await loadCarImage(car);
+
+
+        if(image){
+
+            const photo =
+                card.querySelector(".photo");
+
+
+            photo.querySelector(
+                ".photo-placeholder"
+            ).remove();
+
 
             const img =
                 document.createElement("img");
 
-            img.src = photo;
+            img.src = image;
 
             img.alt =
-                `${brand} ${model}`;
+                `${car.brand} ${car.model || ""}`;
 
 
-            img.onerror = () => {
-
-                img.remove();
-
-                photoBox.innerHTML += `
-                    <svg
-                        viewBox="0 0 120 60"
-                        fill="none"
-                    >
-                        <use href="#carIcon"></use>
-                    </svg>
-                `;
-
-            };
-
-
-            photoBox.appendChild(img);
-
-        }else{
-
-            photoBox.innerHTML = `
-                <svg
-                    viewBox="0 0 120 60"
-                    fill="none"
-                >
-                    <use href="#carIcon"></use>
-                </svg>
-            `;
+            photo.insertBefore(
+                img,
+                photo.firstChild
+            );
 
         }
 
 
-        const badge =
-            document.createElement("span");
+        card.querySelector(
+            ".delete-car"
+        ).onclick =
+            () => deleteCar(car.id);
 
-        badge.className =
-            `rarity ${rarity[0]}`;
-
-        badge.textContent =
-            rarity[1];
-
-
-        photoBox.appendChild(badge);
-
-
-        const info =
-            document.createElement("div");
-
-        info.className =
-            "car-info";
-
-
-        info.innerHTML = `
-            <div class="brand">
-                ${escapeHtml(brand)}
-            </div>
-
-            <div class="model">
-                ${escapeHtml(model)} ·
-                ${escapeHtml(String(year))}
-            </div>
-        `;
-
-
-        card.appendChild(photoBox);
-
-        card.appendChild(info);
-
-        grid.appendChild(card);
-
-    });
-
-
-    document.getElementById(
-        "carCount"
-    ).textContent = cars.length;
-
-
-    document.getElementById(
-        "brandCount"
-    ).textContent =
-        new Set(
-            cars.map(
-                c => (
-                    c.brand ||
-                    c[0] ||
-                    ""
-                ).toLowerCase()
-            )
-        ).size;
+    }
 
 }
 
 
 /* =========================================================
-   HTML ESCAPE
+   ESCAPE HTML
 ========================================================= */
 
 function escapeHtml(value){
@@ -1383,807 +1617,153 @@ function escapeHtml(value){
 
 
 /* =========================================================
-   NAVIGATION
+   UPDATE STATS
 ========================================================= */
 
-const titles = {
+function updateStats(){
 
-    garage: [
-        "Твоя автомобильная охота",
-        "Гараж"
-    ],
-
-    hunt: [
-        "Главный режим игры",
-        "Охота"
-    ],
-
-    collection: [
-        "Прогресс игрока",
-        "Коллекция"
-    ]
-
-};
+    carCount.textContent =
+        cars.length;
 
 
-document
-    .querySelectorAll(".tab[data-screen]")
-    .forEach(button => {
+    brandCount.textContent =
+        new Set(
+            cars.map(
+                car =>
+                    (car.brand || "")
+                    .toLowerCase()
+            )
+        ).size;
+
+
+    rareCount.textContent =
+        cars.filter(
+            car =>
+                ["rare","legendary"]
+                .includes(
+                    rarityFor(car)[0]
+                )
+        ).length;
+
+}
+
+
+/* =========================================================
+   BRAND FILTERS
+========================================================= */
+
+function renderFilters(){
+
+    const container =
+        document.getElementById(
+            "brandFilters"
+        );
+
+
+    const brands =
+        [
+            ...new Set(
+                cars
+                    .map(car => car.brand)
+                    .filter(Boolean)
+            )
+        ]
+        .sort();
+
+
+    container.innerHTML = "";
+
+
+    const all =
+        document.createElement("button");
+
+    all.className =
+        "chip" +
+        (
+            currentFilter === ""
+                ? " active"
+                : ""
+        );
+
+    all.textContent =
+        "Все";
+
+    all.onclick = () => {
+
+        currentFilter = "";
+
+        renderFilters();
+
+        renderGarage();
+
+    };
+
+
+    container.appendChild(all);
+
+
+    brands.forEach(brand => {
+
+        const button =
+            document.createElement("button");
+
+        button.className =
+            "chip" +
+            (
+                currentFilter === brand
+                    ? " active"
+                    : ""
+            );
+
+        button.textContent =
+            brand;
+
 
         button.onclick = () => {
 
-            document
-                .querySelectorAll(
-                    ".tab[data-screen]"
-                )
-                .forEach(
-                    x =>
-                        x.classList.remove(
-                            "active"
-                        )
-                );
+            currentFilter =
+                brand;
 
+            renderFilters();
 
-            button.classList.add(
-                "active"
-            );
-
-
-            document
-                .querySelectorAll(
-                    ".screen"
-                )
-                .forEach(
-                    x =>
-                        x.classList.remove(
-                            "active"
-                        )
-                );
-
-
-            const screen =
-                button.dataset.screen;
-
-
-            document
-                .getElementById(screen)
-                .classList.add("active");
-
-
-            document.getElementById(
-                "eyebrow"
-            ).textContent =
-                titles[screen][0];
-
-
-            document.getElementById(
-                "title"
-            ).textContent =
-                titles[screen][1];
+            renderGarage();
 
         };
 
-    });
 
+        container.appendChild(button);
 
-/* =========================================================
-   COLLECTIONS
-========================================================= */
-
-const collections = [
-
-    [
-        "🇩🇪",
-        "Немецкая тройка",
-        "BMW · Mercedes · Audi",
-        100,
-        3,
-        3,
-        "+300 XP"
-    ],
-
-    [
-        "🇯🇵",
-        "Японская пятёрка",
-        "Toyota · Honda · Nissan · Mazda · Subaru",
-        20,
-        1,
-        5,
-        "+500 XP"
-    ],
-
-    [
-        "🏁",
-        "Первые 10",
-        "Собери 10 автомобилей",
-        60,
-        6,
-        10,
-        "+200 XP"
-    ],
-
-    [
-        "⭐",
-        "Редкая добыча",
-        "Найди 3 редких автомобиля",
-        33,
-        1,
-        3,
-        "+400 XP"
-    ],
-
-    [
-        "🌍",
-        "Путешественник",
-        "Найди машины в 5 городах",
-        20,
-        1,
-        5,
-        "+500 XP"
-    ]
-
-];
-
-
-document.getElementById(
-    "collectionsList"
-).innerHTML =
-
-    collections.map(x => `
-
-        <div class="collection-card">
-
-            <div class="collection-head">
-
-                <h3>
-                    ${x[0]} ${x[1]}
-                </h3>
-
-                <b>
-                    ${x[4]}/${x[5]}
-                </b>
-
-            </div>
-
-            <p>
-                ${x[2]}
-            </p>
-
-            <div class="progress">
-                <i style="width:${x[3]}%"></i>
-            </div>
-
-            <small>
-                НАГРАДА ${x[6]}
-            </small>
-
-        </div>
-
-    `).join("");
-
-
-/* =========================================================
-   ACHIEVEMENTS
-========================================================= */
-
-const achievements = [
-
-    [
-        "📸",
-        "Первый кадр",
-        "Добавь первый автомобиль",
-        "ОТКРЫТО"
-    ],
-
-    [
-        "🔟",
-        "Коллекционер",
-        "Собери 10 автомобилей",
-        "6 / 10"
-    ],
-
-    [
-        "🏷️",
-        "Разнообразие",
-        "Найди 10 разных марок",
-        "6 / 10"
-    ],
-
-    [
-        "🇩🇪",
-        "Немецкий инженер",
-        "Собери BMW, Audi и Mercedes",
-        "ОТКРЫТО"
-    ],
-
-    [
-        "🔥",
-        "На ходу",
-        "Охоться 3 дня подряд",
-        "1 / 3"
-    ],
-
-    [
-        "⭐",
-        "Редкая добыча",
-        "Найди редкий автомобиль",
-        "ОТКРЫТО"
-    ]
-
-];
-
-
-document.getElementById(
-    "achievementsList"
-).innerHTML =
-
-    achievements.map(a => `
-
-        <div class="achievement">
-
-            <div class="badge">
-                ${a[0]}
-            </div>
-
-            <div>
-
-                <b>
-                    ${a[1]}
-                </b>
-
-                <p>
-                    ${a[2]}
-                </p>
-
-                <div class="reward">
-                    ${a[3]}
-                </div>
-
-            </div>
-
-        </div>
-
-    `).join("");
-
-
-/* =========================================================
-   COLLECTION TABS
-========================================================= */
-
-const collectionsTab =
-    document.getElementById(
-        "collectionsTab"
-    );
-
-
-const achievementsTab =
-    document.getElementById(
-        "achievementsTab"
-    );
-
-
-const collectionsList =
-    document.getElementById(
-        "collectionsList"
-    );
-
-
-const achievementsList =
-    document.getElementById(
-        "achievementsList"
-    );
-
-
-collectionsTab.onclick = () => {
-
-    collectionsTab.classList.add(
-        "active"
-    );
-
-    achievementsTab.classList.remove(
-        "active"
-    );
-
-    collectionsList.style.display =
-        "block";
-
-    achievementsList.style.display =
-        "none";
-
-};
-
-
-achievementsTab.onclick = () => {
-
-    achievementsTab.classList.add(
-        "active"
-    );
-
-    collectionsTab.classList.remove(
-        "active"
-    );
-
-    collectionsList.style.display =
-        "none";
-
-    achievementsList.style.display =
-        "block";
-
-};
-
-
-/* =========================================================
-   RECOGNITION
-========================================================= */
-
-async function recognize(file){
-
-    const fd =
-        new FormData();
-
-
-    fd.append(
-        "photo",
-        file,
-        file.name || "car.jpg"
-    );
-
-
-    const response =
-        await fetch(
-            API +
-            "/api/cars/recognize",
-            {
-                method:"POST",
-                body:fd
-            }
-        );
-
-
-    if(!response.ok){
-
-        const text =
-            await response.text();
-
-        throw new Error(text);
-
-    }
-
-
-    return await response.json();
-
-}
-
-
-/* =========================================================
-   SHOW RECOGNITION RESULT
-========================================================= */
-
-function showResult(
-    data,
-    file
-){
-
-    pending = {
-        ...data,
-        file
-    };
-
-
-    const newCar =
-        isNewCar(data);
-
-
-    const rarity =
-        rarityFor(data);
-
-
-    document.getElementById(
-        "resultStatus"
-    ).textContent =
-
-        newCar
-        ?
-        "🆕 НОВАЯ НАХОДКА!"
-        :
-        "📸 ПОВТОРНАЯ НАХОДКА";
-
-
-    document.getElementById(
-        "resultName"
-    ).textContent =
-
-        (
-            (data.brand || "Неизвестно") +
-            " " +
-            (data.model || "")
-        ).toUpperCase();
-
-
-    document.getElementById(
-        "resultConfidence"
-    ).textContent =
-
-        Math.round(
-            (data.confidence || 0) * 100
-        ) +
-        "% УВЕРЕННОСТЬ ИИ";
-
-
-    document.getElementById(
-        "resultReward"
-    ).textContent =
-
-        (
-            newCar
-            ? "+50 XP"
-            : "+10 XP"
-        ) +
-        " · " +
-        rarity[1];
-
-
-    const photoBox =
-        document.getElementById(
-            "resultPhoto"
-        );
-
-
-    if(file){
-
-        const url =
-            URL.createObjectURL(file);
-
-
-        photoBox.style.backgroundImage =
-            `url("${url}")`;
-
-
-        photoBox.innerHTML = "";
-
-    }
-
-
-    result.classList.add(
-        "show"
-    );
-
-
-    result.scrollIntoView({
-        behavior:"smooth",
-        block:"start"
     });
 
 }
 
 
 /* =========================================================
-   CAMERA
-========================================================= */
-
-input.addEventListener(
-    "change",
-    async event => {
-
-        const file =
-            event.target.files[0];
-
-
-        if(!file){
-            return;
-        }
-
-
-        scanBtn.disabled = true;
-
-        scanBtn.textContent =
-            "⏳ РАСПОЗНАЁМ...";
-
-
-        try{
-
-            const data =
-                await recognize(file);
-
-
-            showResult(
-                data,
-                file
-            );
-
-
-        }catch(error){
-
-            console.error(
-                "Recognition error:",
-                error
-            );
-
-
-            showToast(
-                "Не удалось распознать автомобиль"
-            );
-
-        }finally{
-
-            scanBtn.disabled = false;
-
-            scanBtn.textContent =
-                "📸 СКАНИРОВАТЬ АВТОМОБИЛЬ";
-
-
-            input.value = "";
-
-        }
-
-    }
-);
-
-
-/* =========================================================
-   OPEN CAMERA
-========================================================= */
-
-scanBtn.onclick = () => {
-
-    input.click();
-
-};
-
-
-/* =========================================================
-   DEMO
-========================================================= */
-
-demoBtn.onclick = () => {
-
-    /*
-       Демо-файл без настоящей фотографии.
-       Используется только для проверки интерфейса.
-    */
-
-    const demoFile =
-        new File(
-            ["demo"],
-            "demo.jpg",
-            {
-                type:"image/jpeg"
-            }
-        );
-
-
-    showResult(
-        {
-            brand:"Toyota",
-            model:"Supra",
-            year:"2020",
-            confidence:.96
-        },
-        demoFile
-    );
-
-};
-
-
-/* =========================================================
-   SAVE CAR
-========================================================= */
-
-async function saveToBackend(
-    data,
-    file
-){
-
-    if(!tg?.initData){
-
-        throw new Error(
-            "Telegram initData отсутствует"
-        );
-
-    }
-
-
-    const fd =
-        new FormData();
-
-
-    fd.append(
-        "brand",
-        data.brand || ""
-    );
-
-
-    fd.append(
-        "model",
-        data.model || ""
-    );
-
-
-    fd.append(
-        "year",
-        data.year || ""
-    );
-
-
-    fd.append(
-        "ai_confidence",
-        data.confidence != null
-        ?
-        String(data.confidence)
-        :
-        ""
-    );
-
-
-    fd.append(
-        "confirmed_by_user",
-        "true"
-    );
-
-
-    fd.append(
-        "location",
-        ""
-    );
-
-
-    fd.append(
-        "photo",
-        file,
-        file.name || "car.jpg"
-    );
-
-
-    const response =
-        await fetch(
-            API + "/api/cars",
-            {
-                method:"POST",
-
-                headers:{
-                    "X-Telegram-Init-Data":
-                        tg.initData
-                },
-
-                body:fd
-            }
-        );
-
-
-    if(!response.ok){
-
-        const text =
-            await response.text();
-
-        throw new Error(text);
-
-    }
-
-
-    return await response.json();
-
-}
-
-
-/* =========================================================
-   ADD TO COLLECTION
-========================================================= */
-
-addDemo.onclick =
-    async () => {
-
-        if(!pending){
-
-            showToast(
-                "Сначала распознай автомобиль"
-            );
-
-            return;
-
-        }
-
-
-        addDemo.disabled = true;
-
-        addDemo.textContent =
-            "⏳ СОХРАНЯЕМ...";
-
-
-        try{
-
-            const saved =
-                await saveToBackend(
-                    pending,
-                    pending.file
-                );
-
-
-            const rarity =
-                rarityFor(saved);
-
-
-            cars.unshift({
-
-                id:saved.id,
-
-                brand:saved.brand,
-
-                model:
-                    saved.model ||
-                    "Неизвестная модель",
-
-                year:
-                    saved.year ||
-                    "—",
-
-                photo_url:
-                    API +
-                    "/api/cars/" +
-                    saved.id +
-                    "/photo",
-
-                rarity
-
-            });
-
-
-            renderCars();
-
-
-            result.classList.remove(
-                "show"
-            );
-
-
-            showToast(
-                "✓ Автомобиль добавлен!"
-            );
-
-
-            pending = null;
-
-
-        }catch(error){
-
-            console.error(
-                "Save error:",
-                error
-            );
-
-
-            showToast(
-                "Ошибка сохранения автомобиля"
-            );
-
-        }finally{
-
-            addDemo.disabled = false;
-
-            addDemo.textContent =
-                "ДОБАВИТЬ В КОЛЛЕКЦИЮ";
-
-        }
-
-    };
-
-
-/* =========================================================
-   LOAD GARAGE
+   LOAD GARAGE FROM BACKEND
 ========================================================= */
 
 async function loadGarage(){
 
-    if(!tg?.initData){
+    if(
+        !tg ||
+        !tg.initData
+    ){
 
-        console.warn(
-            "Telegram initData отсутствует"
+        garageEmpty.style.display =
+            "block";
+
+        showToast(
+            "Открой приложение внутри Telegram"
         );
-
-        renderCars();
 
         return;
 
     }
+
+
+    garageLoader.classList.add(
+        "show"
+    );
 
 
     try{
@@ -2202,67 +1782,40 @@ async function loadGarage(){
 
         if(!response.ok){
 
-            console.warn(
-                "Garage request failed:",
-                response.status
+            throw new Error(
+                await response.text()
             );
 
-            return;
-
-        }
-
-
-        const data =
-            await response.json();
-
-
-        if(!Array.isArray(data)){
-            return;
         }
 
 
         cars =
-            data.map(car => {
-
-                const rarity =
-                    rarityFor(car);
+            await response.json();
 
 
-                return {
+        updateStats();
 
-                    id:car.id,
+        renderFilters();
 
-                    brand:car.brand,
+        await renderGarage();
 
-                    model:
-                        car.model ||
-                        "Неизвестная модель",
+    }
+    catch(error){
 
-                    year:
-                        car.year ||
-                        "—",
-
-                    photo_url:
-                        API +
-                        "/api/cars/" +
-                        car.id +
-                        "/photo",
-
-                    rarity
-
-                };
-
-            });
-
-
-        renderCars();
-
-
-    }catch(error){
-
-        console.warn(
-            "Garage load failed:",
+        console.error(
+            "Garage load error:",
             error
+        );
+
+        showToast(
+            "Не удалось загрузить гараж"
+        );
+
+    }
+    finally{
+
+        garageLoader.classList.remove(
+            "show"
         );
 
     }
@@ -2271,12 +1824,1305 @@ async function loadGarage(){
 
 
 /* =========================================================
+   OPEN CAMERA
+========================================================= */
+
+scanBtn.onclick = () => {
+
+    photoInput.click();
+
+};
+
+
+/* =========================================================
+   RECOGNIZE
+========================================================= */
+
+async function recognizeCar(file){
+
+    const formData =
+        new FormData();
+
+    formData.append(
+        "photo",
+        file,
+        file.name || "car.jpg"
+    );
+
+
+    const response =
+        await fetch(
+            API + "/api/cars/recognize",
+            {
+                method:"POST",
+                body:formData
+            }
+        );
+
+
+    if(!response.ok){
+
+        let message =
+            "Recognition failed";
+
+
+        try{
+
+            const data =
+                await response.json();
+
+            message =
+                data.detail ||
+                message;
+
+        }
+        catch(_){}
+
+
+        throw new Error(
+            message
+        );
+
+    }
+
+
+    return await response.json();
+
+}
+
+
+/* =========================================================
+   SHOW PHOTO
+========================================================= */
+
+function showPhoto(file){
+
+    const url =
+        URL.createObjectURL(file);
+
+    resultImage.src =
+        url;
+
+}
+
+
+/* =========================================================
+   SHOW MANUAL FORM
+========================================================= */
+
+function showManualForm(){
+
+    manualForm.classList.add(
+        "show"
+    );
+
+
+    document
+        .querySelector(".result-card")
+        .style.display =
+        "none";
+
+
+    manualBrand.focus();
+
+}
+
+
+/* =========================================================
+   SHOW AI RESULT
+========================================================= */
+
+function showAIResult(data,file){
+
+    pending = {
+        ...data,
+        file
+    };
+
+
+    showPhoto(file);
+
+
+    manualForm.classList.remove(
+        "show"
+    );
+
+
+    document
+        .querySelector(".result-card")
+        .style.display =
+        "block";
+
+
+    const isNew =
+        !cars.some(
+            car =>
+                (
+                    car.brand || ""
+                ).toLowerCase()
+                ===
+                (
+                    data.brand || ""
+                ).toLowerCase()
+                &&
+                (
+                    car.model || ""
+                ).toLowerCase()
+                ===
+                (
+                    data.model || ""
+                ).toLowerCase()
+        );
+
+
+    const rarity =
+        rarityFor(data);
+
+
+    resultStatus.textContent =
+        isNew
+            ? "🆕 НОВАЯ НАХОДКА!"
+            : "📸 ПОВТОРНАЯ НАХОДКА";
+
+
+    resultTitle.textContent =
+        (
+            (data.brand || "НЕИЗВЕСТНО") +
+            " " +
+            (data.model || "")
+        ).trim()
+        .toUpperCase();
+
+
+    const conf =
+        Number(
+            data.confidence || 0
+        );
+
+
+    confidence.textContent =
+        Math.round(conf * 100) +
+        "% УВЕРЕННОСТЬ ИИ";
+
+
+    resultReward.textContent =
+        (
+            isNew
+                ? "+50 XP"
+                : "+10 XP"
+        ) +
+        " · " +
+        rarity[1];
+
+
+    result.classList.add(
+        "show"
+    );
+
+
+    result.scrollIntoView({
+        behavior:"smooth"
+    });
+
+}
+
+
+/* =========================================================
+   PHOTO INPUT
+========================================================= */
+
+photoInput.addEventListener(
+    "change",
+    async event => {
+
+        const file =
+            event.target.files[0];
+
+
+        if(!file){
+
+            return;
+
+        }
+
+
+        showPhoto(file);
+
+
+        result.classList.remove(
+            "show"
+        );
+
+
+        recognitionLoader.classList.add(
+            "show"
+        );
+
+
+        scanBtn.disabled =
+            true;
+
+        scanBtn.textContent =
+            "⏳ РАСПОЗНАЁМ...";
+
+
+        try{
+
+            const data =
+                await recognizeCar(
+                    file
+                );
+
+
+            /*
+             * Если AI вернул пустую
+             * или слишком неуверенную
+             * информацию — сразу
+             * предлагаем ручной ввод.
+             */
+
+            if(
+                !data ||
+                !data.brand ||
+                Number(
+                    data.confidence || 0
+                ) < 0.45
+            ){
+
+                pending = {
+                    brand:"",
+                    model:"",
+                    year:"",
+                    confidence:0,
+                    file
+                };
+
+
+                showPhoto(file);
+
+                result.classList.add(
+                    "show"
+                );
+
+
+                showManualForm();
+
+
+            }
+            else{
+
+                showAIResult(
+                    data,
+                    file
+                );
+
+            }
+
+        }
+        catch(error){
+
+            console.error(
+                "Recognition error:",
+                error
+            );
+
+
+            /*
+             * ВАЖНО:
+             * Ошибка AI больше НЕ
+             * блокирует пользователя.
+             *
+             * Мы показываем форму
+             * ручного ввода.
+             */
+
+            pending = {
+                brand:"",
+                model:"",
+                year:"",
+                confidence:0,
+                file
+            };
+
+
+            showPhoto(file);
+
+            result.classList.add(
+                "show"
+            );
+
+
+            showManualForm();
+
+
+            showToast(
+                "ИИ не распознал — введи данные вручную"
+            );
+
+        }
+        finally{
+
+            recognitionLoader.classList.remove(
+                "show"
+            );
+
+
+            scanBtn.disabled =
+                false;
+
+            scanBtn.textContent =
+                "📸 СКАНИРОВАТЬ АВТОМОБИЛЬ";
+
+
+            photoInput.value =
+                "";
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   EDIT AI RESULT
+========================================================= */
+
+document
+    .getElementById("editResult")
+    .onclick = () => {
+
+        if(!pending){
+
+            return;
+
+        }
+
+
+        manualBrand.value =
+            pending.brand || "";
+
+
+        manualModel.value =
+            pending.model || "";
+
+
+        manualYear.value =
+            pending.year || "";
+
+
+        showManualForm();
+
+    };
+
+
+/* =========================================================
+   SAVE CAR TO BACKEND
+========================================================= */
+
+async function saveCar(data){
+
+    if(
+        !tg ||
+        !tg.initData
+    ){
+
+        throw new Error(
+            "Telegram authentication unavailable"
+        );
+
+    }
+
+
+    if(
+        !pending ||
+        !pending.file
+    ){
+
+        throw new Error(
+            "Photo is missing"
+        );
+
+    }
+
+
+    const formData =
+        new FormData();
+
+
+    formData.append(
+        "photo",
+        pending.file,
+        pending.file.name ||
+        "car.jpg"
+    );
+
+
+    formData.append(
+        "brand",
+        data.brand
+    );
+
+
+    if(data.model){
+
+        formData.append(
+            "model",
+            data.model
+        );
+
+    }
+
+
+    if(data.year){
+
+        formData.append(
+            "year",
+            data.year
+        );
+
+    }
+
+
+    formData.append(
+        "ai_confidence",
+        String(
+            data.confidence || 0
+        )
+    );
+
+
+    formData.append(
+        "confirmed_by_user",
+        "true"
+    );
+
+
+    const response =
+        await fetch(
+            API + "/api/cars",
+            {
+                method:"POST",
+
+                headers:{
+                    "X-Telegram-Init-Data":
+                        tg.initData
+                },
+
+                body:formData
+            }
+        );
+
+
+    if(!response.ok){
+
+        let message =
+            "Не удалось сохранить автомобиль";
+
+
+        try{
+
+            const body =
+                await response.json();
+
+            message =
+                body.detail ||
+                message;
+
+        }
+        catch(_){}
+
+
+        throw new Error(
+            message
+        );
+
+    }
+
+
+    return await response.json();
+
+}
+
+
+/* =========================================================
+   SAVE AI RESULT
+========================================================= */
+
+document
+    .getElementById("saveRecognized")
+    .onclick = async () => {
+
+        if(!pending){
+
+            showToast(
+                "Сначала сфотографируй автомобиль"
+            );
+
+            return;
+
+        }
+
+
+        const data = {
+
+            brand:
+                pending.brand,
+
+            model:
+                pending.model || null,
+
+            year:
+                pending.year || null,
+
+            confidence:
+                pending.confidence || 0
+
+        };
+
+
+        if(!data.brand){
+
+            showManualForm();
+
+            return;
+
+        }
+
+
+        await saveCurrentCar(
+            data
+        );
+
+    };
+
+
+/* =========================================================
+   SAVE MANUAL
+========================================================= */
+
+document
+    .getElementById("saveManual")
+    .onclick = async () => {
+
+        const brand =
+            manualBrand.value.trim();
+
+        const model =
+            manualModel.value.trim();
+
+        const year =
+            manualYear.value.trim();
+
+
+        if(!brand){
+
+            showToast(
+                "Укажи марку автомобиля"
+            );
+
+            manualBrand.focus();
+
+            return;
+
+        }
+
+
+        const data = {
+
+            brand,
+
+            model:
+                model || null,
+
+            year:
+                year || null,
+
+            confidence:
+                pending?.confidence || 0
+
+        };
+
+
+        await saveCurrentCar(
+            data
+        );
+
+    };
+
+
+/* =========================================================
+   SAVE CURRENT CAR
+========================================================= */
+
+async function saveCurrentCar(data){
+
+    const saveButton =
+        document.getElementById(
+            "saveManual"
+        );
+
+
+    const recognizedButton =
+        document.getElementById(
+            "saveRecognized"
+        );
+
+
+    saveButton.disabled =
+        true;
+
+    recognizedButton.disabled =
+        true;
+
+
+    try{
+
+        await saveCar(data);
+
+
+        showToast(
+            "✓ Автомобиль добавлен!"
+        );
+
+
+        /*
+         * Загружаем коллекцию
+         * непосредственно из PostgreSQL.
+         */
+
+        await loadGarage();
+
+
+        /*
+         * Очищаем состояние.
+         */
+
+        pending = null;
+
+
+        result.classList.remove(
+            "show"
+        );
+
+
+        manualForm.classList.remove(
+            "show"
+        );
+
+
+        manualBrand.value =
+            "";
+
+        manualModel.value =
+            "";
+
+        manualYear.value =
+            "";
+
+
+        /*
+         * Переходим в гараж.
+         */
+
+        switchScreen(
+            "garage"
+        );
+
+    }
+    catch(error){
+
+        console.error(
+            "Save car error:",
+            error
+        );
+
+
+        showToast(
+            error.message ||
+            "Не удалось сохранить автомобиль"
+        );
+
+    }
+    finally{
+
+        saveButton.disabled =
+            false;
+
+        recognizedButton.disabled =
+            false;
+
+    }
+
+}
+
+
+/* =========================================================
+   CANCEL MANUAL
+========================================================= */
+
+document
+    .getElementById("cancelManual")
+    .onclick = () => {
+
+        manualForm.classList.remove(
+            "show"
+        );
+
+
+        document
+            .querySelector(".result-card")
+            .style.display =
+            "block";
+
+    };
+
+
+/* =========================================================
+   DELETE CAR
+========================================================= */
+
+async function deleteCar(carId){
+
+    if(
+        !confirm(
+            "Удалить этот автомобиль из коллекции?"
+        )
+    ){
+
+        return;
+
+    }
+
+
+    try{
+
+        const response =
+            await fetch(
+                API +
+                "/api/cars/" +
+                carId,
+                {
+                    method:"DELETE",
+
+                    headers:{
+                        "X-Telegram-Init-Data":
+                            tg.initData
+                    }
+                }
+            );
+
+
+        if(!response.ok){
+
+            throw new Error(
+                "Delete failed"
+            );
+
+        }
+
+
+        showToast(
+            "Автомобиль удалён"
+        );
+
+
+        await loadGarage();
+
+    }
+    catch(error){
+
+        console.error(
+            error
+        );
+
+        showToast(
+            "Не удалось удалить автомобиль"
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   SCREEN NAVIGATION
+========================================================= */
+
+const titles = {
+
+    garage:[
+        "Твоя автомобильная охота",
+        "Гараж"
+    ],
+
+    hunt:[
+        "Главный режим игры",
+        "Охота"
+    ],
+
+    collection:[
+        "Прогресс игрока",
+        "Коллекция"
+    ]
+
+};
+
+
+function switchScreen(screen){
+
+    document
+        .querySelectorAll(".tab")
+        .forEach(
+            button =>
+                button.classList.remove(
+                    "active"
+                )
+        );
+
+
+    document
+        .querySelectorAll(".tab[data-screen]")
+        .forEach(
+            button => {
+
+                if(
+                    button.dataset.screen
+                    ===
+                    screen
+                ){
+
+                    button.classList.add(
+                        "active"
+                    );
+
+                }
+
+            }
+        );
+
+
+    document
+        .querySelectorAll(".screen")
+        .forEach(
+            section =>
+                section.classList.remove(
+                    "active"
+                )
+        );
+
+
+    document
+        .getElementById(screen)
+        .classList.add(
+            "active"
+        );
+
+
+    document
+        .getElementById("eyebrow")
+        .textContent =
+        titles[screen][0];
+
+
+    document
+        .getElementById("title")
+        .textContent =
+        titles[screen][1];
+
+}
+
+
+document
+    .querySelectorAll(
+        ".tab[data-screen]"
+    )
+    .forEach(
+        button => {
+
+            button.onclick =
+                () => {
+
+                    switchScreen(
+                        button.dataset.screen
+                    );
+
+                };
+
+        }
+    );
+
+
+/* =========================================================
+   COLLECTIONS
+========================================================= */
+
+const collections = [
+
+    [
+        "🇩🇪",
+        "Немецкая тройка",
+        "BMW · Mercedes · Audi",
+        0,
+        3,
+        "+300 XP"
+    ],
+
+    [
+        "🇯🇵",
+        "Японская пятёрка",
+        "Toyota · Honda · Nissan · Mazda · Subaru",
+        0,
+        5,
+        "+500 XP"
+    ],
+
+    [
+        "🏁",
+        "Первые 10",
+        "Собери 10 автомобилей",
+        0,
+        10,
+        "+200 XP"
+    ],
+
+    [
+        "⭐",
+        "Редкая добыча",
+        "Найди 3 редких автомобиля",
+        0,
+        3,
+        "+400 XP"
+    ],
+
+    [
+        "🌍",
+        "Путешественник",
+        "Найди машины в 5 городах",
+        0,
+        5,
+        "+500 XP"
+    ]
+
+];
+
+
+function renderCollections(){
+
+    const list =
+        document.getElementById(
+            "collectionsList"
+        );
+
+
+    const count =
+        cars.length;
+
+
+    const brands =
+        new Set(
+            cars.map(
+                car =>
+                    (
+                        car.brand || ""
+                    ).toLowerCase()
+            )
+        );
+
+
+    const german =
+        ["bmw","mercedes","audi"]
+            .filter(
+                brand =>
+                    brands.has(brand)
+            ).length;
+
+
+    const japanese =
+        ["toyota","honda","nissan","mazda","subaru"]
+            .filter(
+                brand =>
+                    brands.has(brand)
+            ).length;
+
+
+    const rare =
+        cars.filter(
+            car =>
+                ["rare","legendary"]
+                .includes(
+                    rarityFor(car)[0]
+                )
+        ).length;
+
+
+    const values = [
+
+        german,
+
+        japanese,
+
+        count,
+
+        rare,
+
+        new Set(
+            cars
+                .map(car => car.location)
+                .filter(Boolean)
+        ).size
+
+    ];
+
+
+    list.innerHTML =
+        collections.map(
+            (item,index) => {
+
+                const current =
+                    values[index];
+
+                const percent =
+                    Math.min(
+                        100,
+                        Math.round(
+                            current /
+                            item[4] *
+                            100
+                        )
+                    );
+
+
+                return `
+
+                    <div class="collection-card">
+
+                        <div class="collection-head">
+
+                            <h3>
+                                ${item[0]}
+                                ${item[1]}
+                            </h3>
+
+                            <b>
+                                ${current}/${item[4]}
+                            </b>
+
+                        </div>
+
+                        <p>
+                            ${item[2]}
+                        </p>
+
+                        <div class="progress">
+
+                            <i
+                                style="
+                                width:${percent}%
+                                "
+                            ></i>
+
+                        </div>
+
+                        <small>
+                            НАГРАДА ${item[5]}
+                        </small>
+
+                    </div>
+
+                `;
+
+            }
+        ).join("");
+
+}
+
+
+/* =========================================================
+   ACHIEVEMENTS
+========================================================= */
+
+function renderAchievements(){
+
+    const achievements = [
+
+        [
+            "📸",
+            "Первый кадр",
+            "Добавь первый автомобиль",
+            cars.length >= 1
+                ? "ОТКРЫТО"
+                : "0 / 1"
+        ],
+
+        [
+            "🔟",
+            "Коллекционер",
+            "Собери 10 автомобилей",
+            `${Math.min(cars.length,10)} / 10`
+        ],
+
+        [
+            "🏷️",
+            "Разнообразие",
+            "Найди 10 разных марок",
+            `${Math.min(
+                brandCount.textContent,
+                10
+            )} / 10`
+        ],
+
+        [
+            "🇩🇪",
+            "Немецкий инженер",
+            "Собери BMW, Audi и Mercedes",
+            "—"
+        ],
+
+        [
+            "⭐",
+            "Редкая добыча",
+            "Найди редкий автомобиль",
+            rareCount.textContent > 0
+                ? "ОТКРЫТО"
+                : "НЕ ОТКРЫТО"
+        ]
+
+    ];
+
+
+    document.getElementById(
+        "achievementsList"
+    ).innerHTML =
+
+        achievements.map(
+            achievement => `
+
+                <div class="achievement">
+
+                    <div class="badge">
+                        ${achievement[0]}
+                    </div>
+
+                    <div>
+
+                        <b>
+                            ${achievement[1]}
+                        </b>
+
+                        <p>
+                            ${achievement[2]}
+                        </p>
+
+                        <div class="reward">
+                            ${achievement[3]}
+                        </div>
+
+                    </div>
+
+                </div>
+
+            `
+        ).join("");
+
+}
+
+
+/* =========================================================
+   COLLECTION TABS
+========================================================= */
+
+document
+    .getElementById("collectionsTab")
+    .onclick = () => {
+
+        document
+            .getElementById(
+                "collectionsTab"
+            )
+            .classList.add("active");
+
+        document
+            .getElementById(
+                "achievementsTab"
+            )
+            .classList.remove("active");
+
+
+        document
+            .getElementById(
+                "collectionsList"
+            )
+            .style.display =
+            "block";
+
+
+        document
+            .getElementById(
+                "achievementsList"
+            )
+            .style.display =
+            "none";
+
+
+        renderCollections();
+
+    };
+
+
+document
+    .getElementById("achievementsTab")
+    .onclick = () => {
+
+        document
+            .getElementById(
+                "achievementsTab"
+            )
+            .classList.add("active");
+
+        document
+            .getElementById(
+                "collectionsTab"
+            )
+            .classList.remove("active");
+
+
+        document
+            .getElementById(
+                "collectionsList"
+            )
+            .style.display =
+            "none";
+
+
+        document
+            .getElementById(
+                "achievementsList"
+            )
+            .style.display =
+            "block";
+
+
+        renderAchievements();
+
+    };
+
+
+/* =========================================================
    START
 ========================================================= */
 
-renderCars();
+async function init(){
 
-loadGarage();
+    await loadGarage();
+
+    renderCollections();
+
+    renderAchievements();
+
+}
+
+
+init();
 
 </script>
 
