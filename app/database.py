@@ -1,33 +1,57 @@
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+import os
+
+from sqlalchemy.ext.asyncio import (
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
 from sqlalchemy.orm import DeclarativeBase
 
-from app.config import settings
+
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+if not DATABASE_URL:
+    raise RuntimeError("DATABASE_URL is not set")
+
+
+if DATABASE_URL.startswith("postgresql://"):
+    DATABASE_URL = DATABASE_URL.replace(
+        "postgresql://",
+        "postgresql+psycopg://",
+        1,
+    )
+
+print("DATABASE DRIVER:", DATABASE_URL.split("://")[0])
+
 
 engine = create_async_engine(
-settings.DATABASE_URL,
-echo=True
+    DATABASE_URL,
+    echo=True,
+    pool_pre_ping=True,
 )
 
-async_session = async_sessionmaker(
-engine,
-expire_on_commit=False
+
+AsyncSessionLocal = async_sessionmaker(
+    engine,
+    class_=AsyncSession,
+    expire_on_commit=False,
 )
+
 
 class Base(DeclarativeBase):
-"""Base class for all database models."""
+    pass
 
-async def get_db() -> AsyncSession:
-async with async_session() as session:
-yield session
+
+async def get_db():
+    async with AsyncSessionLocal() as session:
+        yield session
+
 
 async def init_db():
-from app import models
+    from app.models import User, Car
 
-```
-print("LOADED TABLES:", Base.metadata.tables.keys())
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
 
-async with engine.begin() as conn:
-    await conn.run_sync(Base.metadata.create_all)
-
-print("DATABASE INITIALIZED")
-```
+    print("LOADED TABLES:", list(Base.metadata.tables.keys()))
+    print("DATABASE INITIALIZED")
