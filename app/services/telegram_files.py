@@ -1,19 +1,52 @@
-from aiogram import Bot
+import httpx
 
 from app.config import settings
 
 
-async def download_telegram_photo(file_id: str) -> bytes:
-    bot = Bot(token=settings.BOT_TOKEN)
+async def download_telegram_photo(
+    file_id: str
+) -> bytes:
 
-    try:
-        telegram_file = await bot.get_file(file_id)
+    # Получаем информацию о файле
+    get_file_url = (
+        f"https://api.telegram.org/bot"
+        f"{settings.BOT_TOKEN}/getFile"
+    )
 
-        file = await bot.download_file(
-            telegram_file.file_path
+    async with httpx.AsyncClient(
+        timeout=30
+    ) as client:
+
+        response = await client.get(
+            get_file_url,
+            params={
+                "file_id": file_id
+            }
         )
 
-        return file.read()
+        response.raise_for_status()
 
-    finally:
-        await bot.session.close()
+        data = response.json()
+
+        if not data.get("ok"):
+
+            raise RuntimeError(
+                f"Telegram getFile error: {data}"
+            )
+
+        file_path = data["result"]["file_path"]
+
+        # Скачиваем файл
+        download_url = (
+            f"https://api.telegram.org/file/bot"
+            f"{settings.BOT_TOKEN}/"
+            f"{file_path}"
+        )
+
+        photo_response = await client.get(
+            download_url
+        )
+
+        photo_response.raise_for_status()
+
+        return photo_response.content
