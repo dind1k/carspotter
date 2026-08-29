@@ -1,3 +1,4 @@
+```python
 from sqlalchemy import Column, Integer, String, Float, Boolean, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 from datetime import datetime
@@ -9,8 +10,18 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
-    telegram_id = Column(String, unique=True, index=True, nullable=False)
-    username = Column(String, nullable=True)
+
+    telegram_id = Column(
+        String,
+        unique=True,
+        index=True,
+        nullable=False
+    )
+
+    username = Column(
+        String,
+        nullable=True
+    )
 
     created_at = Column(
         DateTime,
@@ -28,7 +39,11 @@ class User(Base):
 class Car(Base):
     __tablename__ = "cars"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True
+    )
 
     owner_id = Column(
         Integer,
@@ -36,16 +51,10 @@ class Car(Base):
         nullable=False
     )
 
-    # Старое поле оставляем для совместимости
-    photo_file_id = Column(
+    # Путь к настоящей фотографии автомобиля
+    photo_url = Column(
         String,
-        nullable=True
-    )
-
-    # Новый путь к реальной фотографии
-    photo_path = Column(
-        String,
-        nullable=True
+        nullable=False
     )
 
     brand = Column(
@@ -89,3 +98,4 @@ class Car(Base):
         "User",
         back_populates="cars"
     )
+```
