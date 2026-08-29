@@ -36,9 +36,16 @@ class Car(Base):
         nullable=False
     )
 
+    # Старое поле оставляем для совместимости
     photo_file_id = Column(
         String,
-        nullable=False
+        nullable=True
+    )
+
+    # Новый путь к реальной фотографии
+    photo_path = Column(
+        String,
+        nullable=True
     )
 
     brand = Column(
