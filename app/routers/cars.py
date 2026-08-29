@@ -1,21 +1,37 @@
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Header
+import os
+import uuid
+
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    UploadFile,
+    File,
+    Header,
+    Form,
+)
+
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from typing import Optional
-from fastapi.responses import Response
+
+from fastapi.responses import FileResponse
 
 from app.database import get_db
 from app.models import Car, User
-from app.schemas import CarCreate, CarOut, RecognizeResult
+from app.schemas import CarOut, RecognizeResult
 from app.services.recognition import recognize_car
 from app.services.telegram_auth import validate_init_data
-from app.services.telegram_files import download_telegram_photo
 
 
 router = APIRouter(
     prefix="/api/cars",
     tags=["cars"]
 )
+
+
+UPLOAD_DIR = "uploads"
+os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 
 # =========================
@@ -41,7 +57,6 @@ async def get_current_user(
 
     telegram_id = str(tg_user["id"])
 
-
     result = await db.execute(
         select(User).where(
             User.telegram_id == telegram_id
@@ -50,9 +65,7 @@ async def get_current_user(
 
     user = result.scalar_one_or_none()
 
-
     if not user:
-
         user = User(
             telegram_id=telegram_id,
             username=tg_user.get("username")
@@ -63,9 +76,7 @@ async def get_current_user(
         await db.commit()
         await db.refresh(user)
 
-
     return user
-
 
 
 # =========================
@@ -82,6 +93,12 @@ async def recognize(
 
     image_bytes = await photo.read()
 
+    if not image_bytes:
+        raise HTTPException(
+            status_code=400,
+            detail="Empty photo"
+        )
+
     result = await recognize_car(
         image_bytes,
         photo.content_type or "image/jpeg"
@@ -90,9 +107,8 @@ async def recognize(
     return result
 
 
-
 # =========================
-# Save car
+# Save car + real photo
 # =========================
 
 @router.post(
@@ -100,25 +116,78 @@ async def recognize(
     response_model=CarOut
 )
 async def create_car(
-    car: CarCreate,
+    brand: str = Form(...),
+    model: Optional[str] = Form(None),
+    year: Optional[str] = Form(None),
+    ai_confidence: Optional[float] = Form(None),
+    confirmed_by_user: bool = Form(True),
+    location: Optional[str] = Form(None),
+
+    photo: UploadFile = File(...),
+
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
 
-    db_car = Car(
-        owner_id=user.id,
-        **car.model_dump()
+    image_bytes = await photo.read()
+
+    if not image_bytes:
+        raise HTTPException(
+            status_code=400,
+            detail="Empty photo"
+        )
+
+    # Проверяем тип файла
+    content_type = photo.content_type or ""
+
+    if not content_type.startswith("image/"):
+        raise HTTPException(
+            status_code=400,
+            detail="File must be an image"
+        )
+
+    # Уникальное имя
+    extension = ".jpg"
+
+    if "png" in content_type:
+        extension = ".png"
+    elif "webp" in content_type:
+        extension = ".webp"
+    elif "jpeg" in content_type:
+        extension = ".jpg"
+
+    filename = f"{uuid.uuid4().hex}{extension}"
+
+    file_path = os.path.join(
+        UPLOAD_DIR,
+        filename
     )
 
+    # Сохраняем фотографию
+    with open(file_path, "wb") as f:
+        f.write(image_bytes)
+
+    # Создаём автомобиль
+    db_car = Car(
+        owner_id=user.id,
+        photo_path=file_path,
+        photo_file_id=None,
+
+        brand=brand,
+        model=model,
+        year=year,
+
+        ai_confidence=ai_confidence,
+        confirmed_by_user=confirmed_by_user,
+        location=location,
+    )
 
     db.add(db_car)
 
     await db.commit()
     await db.refresh(db_car)
 
-
     return db_car
-
 
 
 # =========================
@@ -132,6 +201,7 @@ async def create_car(
 async def list_cars(
     brand: Optional[str] = None,
     model: Optional[str] = None,
+
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
@@ -140,69 +210,23 @@ async def list_cars(
         Car.owner_id == user.id
     )
 
-
     if brand:
         query = query.where(
             Car.brand.ilike(f"%{brand}%")
         )
-
 
     if model:
         query = query.where(
             Car.model.ilike(f"%{model}%")
         )
 
-
     query = query.order_by(
         Car.created_at.desc()
     )
 
-
     result = await db.execute(query)
 
-
     return result.scalars().all()
-
-
-
-# =========================
-# Delete car
-# =========================
-
-@router.delete("/{car_id}")
-async def delete_car(
-    car_id: int,
-    user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-):
-
-    result = await db.execute(
-        select(Car).where(
-            Car.id == car_id,
-            Car.owner_id == user.id
-        )
-    )
-
-
-    car = result.scalar_one_or_none()
-
-
-    if not car:
-        raise HTTPException(
-            status_code=404,
-            detail="Car not found"
-        )
-
-
-    await db.delete(car)
-
-    await db.commit()
-
-
-    return {
-        "ok": True
-    }
-
 
 
 # =========================
@@ -212,6 +236,7 @@ async def delete_car(
 @router.get("/{car_id}/photo")
 async def get_car_photo(
     car_id: int,
+
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
@@ -223,9 +248,7 @@ async def get_car_photo(
         )
     )
 
-
     car = result.scalar_one_or_none()
-
 
     if not car:
         raise HTTPException(
@@ -233,78 +256,58 @@ async def get_car_photo(
             detail="Car not found"
         )
 
+    if not car.photo_path:
+        raise HTTPException(
+            status_code=404,
+            detail="Photo not found"
+        )
 
-    photo = await download_telegram_photo(
-        car.photo_file_id
+    if not os.path.exists(car.photo_path):
+        raise HTTPException(
+            status_code=404,
+            detail="Photo file does not exist"
+        )
+
+    return FileResponse(
+        car.photo_path
     )
 
 
-    return Response(
-        content=photo,
-        media_type="image/jpeg"
-    )
-
-
-
 # =========================
-# TEMP TEST SAVE
-# удалить после проверки
+# Delete car
 # =========================
 
-@router.post("/test-save")
-async def test_save_photo(
-    photo_file_id: str,
+@router.delete("/{car_id}")
+async def delete_car(
+    car_id: int,
+
+    user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
 
     result = await db.execute(
-        select(User).limit(1)
+        select(Car).where(
+            Car.id == car_id,
+            Car.owner_id == user.id
+        )
     )
 
+    car = result.scalar_one_or_none()
 
-    user = result.scalar_one_or_none()
-
-
-    if not user:
-
-        user = User(
-            telegram_id="test_user",
-            username="test"
+    if not car:
+        raise HTTPException(
+            status_code=404,
+            detail="Car not found"
         )
 
-        db.add(user)
+    # Удаляем фотографию
+    if car.photo_path and os.path.exists(car.photo_path):
+        os.remove(car.photo_path)
 
-        await db.commit()
-        await db.refresh(user)
-
-
-
-    car = Car(
-
-        owner_id=user.id,
-
-        photo_file_id=photo_file_id,
-
-        brand="BMW",
-
-        model="M3",
-
-        year="2020",
-
-        ai_confidence=0.95,
-
-        confirmed_by_user=True,
-
-        location="Москва"
-
-    )
-
-
-    db.add(car)
+    await db.delete(car)
 
     await db.commit()
 
-    await db.refresh(car)
-
-
-    return car
+    return {
+        "ok": True
+    }
