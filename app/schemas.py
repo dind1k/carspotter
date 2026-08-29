@@ -3,14 +3,6 @@ from datetime import datetime
 from typing import Optional
 
 
-class RecognizeResult(BaseModel):
-    brand: str
-    model: Optional[str] = None
-    year: Optional[str] = None
-    confidence: float
-    photo_url: Optional[str] = None
-
-
 class CarCreate(BaseModel):
     photo_url: str
     brand: str
