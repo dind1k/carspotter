@@ -14,7 +14,7 @@ expire_on_commit=False
 )
 
 class Base(DeclarativeBase):
-pass
+"""Base class for all database models."""
 
 async def get_db() -> AsyncSession:
 async with async_session() as session:
