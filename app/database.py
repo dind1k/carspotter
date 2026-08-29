@@ -24,15 +24,10 @@ async def init_db():
 from app import models
 
 ```
-print(
-    "LOADED TABLES:",
-    Base.metadata.tables.keys()
-)
+print("LOADED TABLES:", Base.metadata.tables.keys())
 
 async with engine.begin() as conn:
-    await conn.run_sync(
-        Base.metadata.create_all
-    )
+    await conn.run_sync(Base.metadata.create_all)
 
 print("DATABASE INITIALIZED")
 ```
