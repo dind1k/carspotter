@@ -1915,165 +1915,164 @@ addBtn.addEventListener("click", async () => {
 
 async function saveCarLocally(data, file) {
 
-    let photo = null;
-
-
-    /*
-       Сохраняем реальную фотографию локально.
-
-       Это временное решение.
-       На следующем этапе перенесём фотографии
-       в нормальное файловое хранилище.
-    */
-
-    if (file) {
-
-        photo =
-            await fileToDataURL(file);
-
-    }
-
-
-    const car = {
-
-        brand:
-            data.brand || "Неизвестно",
-
-        model:
-            data.model || "Неизвестная модель",
-
-        year:
-            data.year || null,
-
-        confidence:
-            data.confidence || 0,
-
-        photo
-
-    };
-
-
-    cars.unshift(car);
-
-
-    /*
-       Ограничение необходимо,
-       потому что localStorage имеет небольшой объём.
-    */
-
     try {
 
-        localStorage.setItem(
-            "carspotter_local_cars",
-            JSON.stringify(cars)
-        );
-
-    } catch (error) {
+        let savedCar = null;
 
         /*
-           Если фотографий стало слишком много,
-           сохраняем коллекцию без фото.
-        */
+         * Если Telegram доступен —
+         * сначала сохраняем фотографию на backend.
+         */
 
-        console.warn(
-            "localStorage photo limit reached",
-            error
-        );
+        if (tg && tg.initData) {
+
+            savedCar = await saveToBackend(
+                data,
+                file
+            );
+
+        }
 
 
-        cars =
-            cars.map(car => ({
-                ...car,
-                photo:null
-            }));
+        /*
+         * Если backend недоступен,
+         * временно сохраняем данные локально.
+         */
+
+        if (savedCar) {
+
+            const car = {
+
+                id: savedCar.id,
+
+                brand:
+                    savedCar.brand,
+
+                model:
+                    savedCar.model || null,
+
+                year:
+                    savedCar.year || null,
+
+                confidence:
+                    savedCar.ai_confidence || 0,
+
+                photo:
+                    savedCar.photo_url
+                        ? API + savedCar.photo_url
+                        : null
+
+            };
+
+
+            /*
+             * Удаляем возможную старую
+             * локальную копию этой машины.
+             */
+
+            cars = cars.filter(
+                x => x.id !== car.id
+            );
+
+
+            cars.unshift(car);
+
+
+            /*
+             * В localStorage храним только
+             * информацию о машине,
+             * НЕ сам файл фотографии.
+             */
+
+            localStorage.setItem(
+                "carspotter_local_cars",
+                JSON.stringify(cars)
+            );
+
+
+            renderCars();
+
+            return;
+
+        }
+
+
+        /*
+         * Fallback — если backend недоступен.
+         */
+
+        const localCar = {
+
+            id:
+                "local-" + Date.now(),
+
+            brand:
+                data.brand || "Неизвестно",
+
+            model:
+                data.model || null,
+
+            year:
+                data.year || null,
+
+            confidence:
+                data.confidence || 0,
+
+            photo:null
+
+        };
+
+
+        cars.unshift(localCar);
 
 
         localStorage.setItem(
             "carspotter_local_cars",
             JSON.stringify(cars)
         );
+
+
+        renderCars();
 
 
         showToast(
-            "Добавлено, но фото слишком большое"
+            "Сохранено локально"
         );
 
-    }
-
-
-    renderCars();
-
-
-    /*
-       Если Telegram WebApp доступен,
-       пробуем сохранить информацию на backend.
-
-       Но отсутствие Telegram auth
-       НЕ ломает добавление автомобиля.
-    */
-
-    try {
-
-        await saveToBackend(car);
 
     } catch (error) {
 
-        console.warn(
-            "Backend save unavailable:",
+        console.error(
+            "Save car error:",
             error
         );
+
+        showError(
+            "Не удалось сохранить автомобиль: " +
+            error.message
+        );
+
+        throw error;
 
     }
 
 }
-
 
 /* =========================================================
    FILE -> DATA URL
 ========================================================= */
-
-function fileToDataURL(file) {
-
-    return new Promise(
-        (resolve,reject) => {
-
-            const reader =
-                new FileReader();
-
-            reader.onload =
-                () => resolve(
-                    reader.result
-                );
-
-            reader.onerror =
-                reject;
-
-            reader.readAsDataURL(file);
-
-        }
-    );
-
-}
 
 
 /* =========================================================
    BACKEND SAVE
 ========================================================= */
 
-async function saveToBackend(car) {
-
-    /*
-       Telegram initData нужен backend
-       для определения пользователя.
-
-       Если приложение открыто не внутри Telegram,
-       просто пропускаем серверное сохранение.
-    */
+async function saveToBackend(car, file) {
 
     if (!tg || !tg.initData) {
 
         console.warn(
-            "Telegram authentication unavailable. Local save used."
+            "Telegram authentication unavailable."
         );
 
         return null;
@@ -2082,40 +2081,104 @@ async function saveToBackend(car) {
 
 
     /*
-       ВАЖНО:
+     * ==========================================
+     * 1. Загружаем фотографию
+     * ==========================================
+     */
 
-       Здесь backend пока ожидает photo_file_id.
-       Настоящий browser photo_file_id получить нельзя.
+    let photoUrl = car.photo_url || null;
 
-       Поэтому передаём временный идентификатор.
-       Настоящее хранение фотографии сделаем
-       отдельным backend endpoint.
-    */
 
-   const body = {
+    if (file) {
 
-    photo_url:
-        car.photo_url || "",
+        const formData =
+            new FormData();
 
-    brand:
-        car.brand,
+        formData.append(
+            "photo",
+            file,
+            file.name || "car.jpg"
+        );
 
-    model:
-        car.model || null,
 
-    year:
-        car.year || null,
+        const uploadResponse =
+            await fetch(
+                API + "/api/cars/upload",
+                {
+                    method:"POST",
 
-    ai_confidence:
-        null,
+                    headers:{
+                        "X-Telegram-Init-Data":
+                            tg.initData
+                    },
 
-    confirmed_by_user:
-        true,
+                    body:formData
+                }
+            );
 
-    location:
-        null
 
-};
+        if (!uploadResponse.ok) {
+
+            const errorText =
+                await uploadResponse.text();
+
+            throw new Error(
+                "Ошибка загрузки фотографии: " +
+                errorText
+            );
+
+        }
+
+
+        const uploadData =
+            await uploadResponse.json();
+
+
+        photoUrl =
+            uploadData.photo_url;
+
+    }
+
+
+    /*
+     * ==========================================
+     * 2. Создаём автомобиль в БД
+     * ==========================================
+     */
+
+    if (!photoUrl) {
+
+        throw new Error(
+            "У автомобиля нет фотографии."
+        );
+
+    }
+
+
+    const body = {
+
+        photo_url:
+            photoUrl,
+
+        brand:
+            car.brand,
+
+        model:
+            car.model || null,
+
+        year:
+            car.year || null,
+
+        ai_confidence:
+            car.confidence || null,
+
+        confirmed_by_user:
+            true,
+
+        location:
+            null
+
+    };
 
 
     const response =
@@ -2140,8 +2203,12 @@ async function saveToBackend(car) {
 
     if (!response.ok) {
 
+        const errorText =
+            await response.text();
+
         throw new Error(
-            await response.text()
+            "Ошибка сохранения автомобиля: " +
+            errorText
         );
 
     }
@@ -2159,25 +2226,19 @@ async function saveToBackend(car) {
 async function loadGarage() {
 
     if (!tg || !tg.initData) {
-
         return;
-
     }
-
 
     try {
 
-        const response =
-            await fetch(
-                API + "/api/cars",
-                {
-                    headers:{
-                        "X-Telegram-Init-Data":
-                            tg.initData
-                    }
+        const response = await fetch(
+            API + "/api/cars",
+            {
+                headers: {
+                    "X-Telegram-Init-Data": tg.initData
                 }
-            );
-
+            }
+        );
 
         if (!response.ok) {
 
@@ -2187,66 +2248,45 @@ async function loadGarage() {
             );
 
             return;
-
         }
 
-
-        const data =
-            await response.json();
-
+        const data = await response.json();
 
         if (!Array.isArray(data)) {
-
             return;
-
         }
 
+        const backendCars = data.map(car => ({
 
-        /*
-           Backend cars пока не содержат
-           настоящих browser-фотографий.
+            id: car.id,
 
-           Поэтому объединяем данные аккуратно.
-        */
+            brand: car.brand,
 
-        const backendCars =
-            data.map(car => ({
+            model:
+                car.model ||
+                "Неизвестная модель",
 
-                brand:car.brand,
+            year:
+                car.year || null,
 
-                model:
-                    car.model ||
-                    "Неизвестная модель",
+            confidence:
+                car.ai_confidence || 0,
 
-                year:
-                    car.year || null,
+            photo:
+                car.photo_url
+                    ? API + car.photo_url
+                    : null
 
-                confidence:
-                    car.ai_confidence || 0,
+        }));
 
-                photo:null
+        cars = backendCars;
 
-            }));
+        localStorage.setItem(
+            "carspotter_local_cars",
+            JSON.stringify(cars)
+        );
 
-
-        /*
-           Backend является источником сохранённых
-           серверных автомобилей.
-        */
-
-        if (backendCars.length) {
-
-            cars = backendCars;
-
-            localStorage.setItem(
-                "carspotter_local_cars",
-                JSON.stringify(cars)
-            );
-
-            renderCars();
-
-        }
-
+        renderCars();
 
     } catch (error) {
 
@@ -2258,7 +2298,6 @@ async function loadGarage() {
     }
 
 }
-
 
 /* =========================================================
    INIT
