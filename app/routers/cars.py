@@ -83,7 +83,6 @@ async def get_current_user(
     user = result.scalar_one_or_none()
 
     if not user:
-
         user = User(
             telegram_id=telegram_id,
             username=tg_user.get("username"),
@@ -108,12 +107,7 @@ async def upload_photo(
     user: User = Depends(get_current_user),
 ):
 
-    if not photo.content_type:
-        raise HTTPException(
-            status_code=400,
-            detail="File type is missing",
-        )
-
+    # Проверяем тип файла
     allowed_types = {
         "image/jpeg": ".jpg",
         "image/png": ".png",
@@ -126,6 +120,7 @@ async def upload_photo(
             detail="Only JPG, PNG and WEBP images are allowed",
         )
 
+    # Читаем фотографию
     image_bytes = await photo.read()
 
     if not image_bytes:
@@ -134,59 +129,8 @@ async def upload_photo(
             detail="Empty image",
         )
 
-    extension = allowed_types[
-        photo.content_type
-    ]
-
-    filename = (
-        f"{uuid.uuid4().hex}"
-        f"{extension}"
-    )
-
-    filepath = os.path.join(
-        UPLOAD_DIR,
-        filename
-    )
-
-    with open(
-        filepath,
-        "wb"
-    ) as f:
-        f.write(image_bytes)
-
-    return {
-        "photo_url": f"/api/cars/photo/{filename}"
-    }
-
-    if not photo.content_type:
-        raise HTTPException(
-            status_code=400,
-            detail="File type is missing",
-        )
-
-    allowed_types = {
-        "image/jpeg": ".jpg",
-        "image/png": ".png",
-        "image/webp": ".webp",
-    }
-
-    if photo.content_type not in allowed_types:
-        raise HTTPException(
-            status_code=400,
-            detail="Only JPG, PNG and WEBP images are allowed",
-        )
-
-    image_bytes = await photo.read()
-
-    if not image_bytes:
-        raise HTTPException(
-            status_code=400,
-            detail="Empty image",
-        )
-
-    extension = allowed_types[
-        photo.content_type
-    ]
+    # Создаём уникальное имя
+    extension = allowed_types[photo.content_type]
 
     filename = (
         f"{uuid.uuid4().hex}"
@@ -198,17 +142,19 @@ async def upload_photo(
         filename,
     )
 
+    # Сохраняем файл
     with open(
         filepath,
         "wb",
     ) as f:
-        f.write(
-            image_bytes
-        )
+        f.write(image_bytes)
+
+    print(
+        f"PHOTO SAVED: {filepath}"
+    )
 
     return {
-        "photo_url":
-            f"/api/cars/photo/{filename}"
+        "photo_url": f"/api/cars/photo/{filename}"
     }
 
 
@@ -216,9 +162,7 @@ async def upload_photo(
 # Serve uploaded photo
 # =========================
 
-@router.get(
-    "/photo/{filename}"
-)
+@router.get("/photo/{filename}")
 async def get_uploaded_photo(
     filename: str,
 ):
