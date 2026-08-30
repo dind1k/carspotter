@@ -107,6 +107,7 @@ async def get_current_user(
 )
 async def upload_photo(
     photo: UploadFile = File(...),
+    user: User = Depends(get_current_user),
 ):
 
     if not photo.content_type:
