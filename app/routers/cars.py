@@ -102,13 +102,61 @@ async def get_current_user(
 # Upload photo
 # =========================
 
-@router.post(
-    "/upload",
-)
+@router.post("/upload")
 async def upload_photo(
     photo: UploadFile = File(...),
     user: User = Depends(get_current_user),
 ):
+
+    if not photo.content_type:
+        raise HTTPException(
+            status_code=400,
+            detail="File type is missing",
+        )
+
+    allowed_types = {
+        "image/jpeg": ".jpg",
+        "image/png": ".png",
+        "image/webp": ".webp",
+    }
+
+    if photo.content_type not in allowed_types:
+        raise HTTPException(
+            status_code=400,
+            detail="Only JPG, PNG and WEBP images are allowed",
+        )
+
+    image_bytes = await photo.read()
+
+    if not image_bytes:
+        raise HTTPException(
+            status_code=400,
+            detail="Empty image",
+        )
+
+    extension = allowed_types[
+        photo.content_type
+    ]
+
+    filename = (
+        f"{uuid.uuid4().hex}"
+        f"{extension}"
+    )
+
+    filepath = os.path.join(
+        UPLOAD_DIR,
+        filename
+    )
+
+    with open(
+        filepath,
+        "wb"
+    ) as f:
+        f.write(image_bytes)
+
+    return {
+        "photo_url": f"/api/cars/photo/{filename}"
+    }
 
     if not photo.content_type:
         raise HTTPException(
